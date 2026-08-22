@@ -114,6 +114,17 @@ Oprire de urgenta: butonul PANIC din interfata, sau CTRL+ALT+P oriunde.
 """
 
 
+def _exe_is_running() -> bool:
+    """True daca MagicQBPM.exe e pornit (ar bloca suprascrierea)."""
+    try:
+        out = subprocess.run(
+            ["tasklist", "/FI", "IMAGENAME eq MagicQBPM.exe", "/NH"],
+            capture_output=True, text=True, timeout=10).stdout
+        return "MagicQBPM.exe" in out
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def main() -> int:
     print("=" * 66)
     print("  BUILD MagicQ BPM Controller")
@@ -126,10 +137,22 @@ def main() -> int:
         print("     py -3.12 -m pip install pyinstaller")
         return 1
 
+    # Un exe pornit tine fisierele blocate, iar PyInstaller esueaza cu o
+    # eroare de permisiuni greu de citit. Verificam intai.
+    if _exe_is_running():
+        print("\n  MagicQBPM.exe RULEAZA ACUM.")
+        print("  Inchide fereastra aplicatiei (si panoul BPM, daca e deschis)")
+        print("  si porneste build-ul din nou. Altfel fisierele sunt blocate.\n")
+        return 1
+
     for folder in (ROOT / "build", ROOT / "dist"):
         if folder.exists():
             print(f"  Sterg {folder.name}/ ...")
             shutil.rmtree(folder, ignore_errors=True)
+            if folder.exists():
+                print(f"\n  Nu pot sterge {folder}/ - probabil un fisier e "
+                      "deschis sau folderul e deschis in Explorer.\n")
+                return 1
 
     print("\n  Rulez PyInstaller (dureaza cateva minute)...\n")
     result = subprocess.run(
@@ -146,13 +169,21 @@ def main() -> int:
     print("\n  Copiez configurarea langa executabil...")
     target = DIST / "config"
     target.mkdir(exist_ok=True)
+    # Se duc DOAR fisierele folosite. Celelalte rules_*.json sunt exemple
+    # pentru alte moduri de control (playback-uri, palete) si daca ajung
+    # langa exe pot fi incarcate din greseala - au apasat PB1-PB10 pe un
+    # show care nu avea nimic acolo.
+    wanted = ["rules_execute.json", "palettes.json", "settings.example.json"]
     copied = 0
-    for src in (ROOT / "config").glob("*.json"):
-        if src.name == "settings.json":
-            continue          # e calibrarea PC-ului asta, nu se duce mai departe
-        shutil.copy2(src, target / src.name)
-        copied += 1
-    print(f"     {copied} fisiere (fara settings.json - se genereaza pe PC-ul nou)")
+    for name in wanted:
+        src = ROOT / "config" / name
+        if src.exists():
+            shutil.copy2(src, target / name)
+            copied += 1
+        else:
+            print(f"     ATENTIE: lipseste {name}")
+    print(f"     {copied} fisiere: {', '.join(wanted)}")
+    print("     (settings.json se genereaza pe PC-ul nou din sablon)")
 
     (DIST / "logs").mkdir(exist_ok=True)
 

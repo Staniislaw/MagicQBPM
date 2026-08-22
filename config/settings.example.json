@@ -444,7 +444,8 @@
         "enabled": true,
         "sensitivity": 1.0,
         "default_cooldown_s": 0.35,
-        "auto_mode": true
+        "auto_mode": true,
+        "file": "config/rules_execute.json"
     },
     "ui": {
         "enabled": true,

@@ -171,6 +171,8 @@ class BpmColorPanel(QMainWindow):
         self.router = router
         self.schemes: list[dict] = []
         self.buttons: list[SchemeButton] = []
+        self.load_error = ""
+        self.palettes_path: Path | None = None
         self.index = -1
 
         self.setWindowTitle("BPM & Culori")
@@ -186,14 +188,30 @@ class BpmColorPanel(QMainWindow):
 
     # ------------------------------------------------------------------
     def _load_schemes(self) -> None:
+        """Incarca combinatiile de culori din config/palettes.json.
+
+        Calea se ia din core.config.ROOT, NU relativ la fisierul asta:
+        intr-un .exe, `__file__` arata spre folderul temporar de extractie,
+        unde nu exista config/ - si panoul ar aparea gol, fara nicio culoare.
+        """
+        from core.config import ROOT as APP_ROOT
+
         path = Path(self.cfg.get("ui.palettes_file", "config/palettes.json"))
         if not path.is_absolute():
-            path = Path(__file__).resolve().parent.parent / path
+            path = APP_ROOT / path
+        self.palettes_path = path
+        self.load_error = ""
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
             self.schemes = [s for s in data.get("scheme", []) if s.get("nume")]
+            if not self.schemes:
+                self.load_error = f"{path.name} nu contine nicio combinatie"
+        except FileNotFoundError:
+            self.load_error = f"lipseste {path}"
         except Exception as exc:  # noqa: BLE001
-            log.error("Nu am putut incarca %s: %s", path, exc)
+            self.load_error = f"{path.name}: {exc}"
+        if self.load_error:
+            log.error("Combinatii de culori: %s", self.load_error)
             self.schemes = []
 
     def _build(self) -> None:
@@ -222,14 +240,25 @@ class BpmColorPanel(QMainWindow):
         title.setFont(QFont("Segoe UI", 8, QFont.Weight.Bold))
         root.addWidget(title)
 
-        grid = QGridLayout()
-        grid.setSpacing(4)
-        for i, scheme in enumerate(self.schemes):
-            btn = SchemeButton(scheme)
-            btn.clicked.connect(lambda _=False, n=i: self.apply_scheme(n))
-            grid.addWidget(btn, i // 2, i % 2)
-            self.buttons.append(btn)
-        root.addLayout(grid)
+        if self.schemes:
+            grid = QGridLayout()
+            grid.setSpacing(4)
+            for i, scheme in enumerate(self.schemes):
+                btn = SchemeButton(scheme)
+                btn.clicked.connect(lambda _=False, n=i: self.apply_scheme(n))
+                grid.addWidget(btn, i // 2, i % 2)
+                self.buttons.append(btn)
+            root.addLayout(grid)
+        else:
+            # Fara asta, panoul ar aparea pur si simplu gol si n-ai avea de
+            # unde sti ca lipseste fisierul de culori.
+            warn = QLabel("NU S-AU INCARCAT CULORILE\n\n"
+                          f"{self.load_error}\n\n"
+                          f"Cautat in:\n{self.palettes_path}")
+            warn.setWordWrap(True)
+            warn.setStyleSheet(f"color: {RED.name()}; padding: 12px;")
+            warn.setFont(QFont("Consolas", 8))
+            root.addWidget(warn)
 
         self.lbl_status = QLabel("gata")
         self.lbl_status.setWordWrap(True)

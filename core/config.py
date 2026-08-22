@@ -354,6 +354,10 @@ DEFAULTS: dict[str, Any] = {
     },
 
     "rules": {
+        # Ce set de reguli se incarca la pornire, cand nu se da --rules.
+        # Implicit e setul pentru fereastra Execute; celelalte rules_*.json
+        # sunt exemple pentru alte moduri de control.
+        "file": "config/rules_execute.json",
         "enabled": True,
         # multiplicator global de sensibilitate aplicat pragurilor de energie
         "sensitivity": 1.0,

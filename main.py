@@ -37,6 +37,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from core.bus import EventBus, EventType          # noqa: E402
+from core.config import ROOT as ROOT_APP           # noqa: E402
 from core.config import (RULES_PATH, SETTINGS_PATH, load_rules_file,  # noqa: E402
                          load_settings, setup_logging)
 from core.rules import load_rules                  # noqa: E402
@@ -50,7 +51,9 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
         description="Controller MagicQ reactiv la muzica (analiza audio in timp real)")
     p.add_argument("--config", default=str(SETTINGS_PATH), help="cale catre settings.json")
-    p.add_argument("--rules", default=str(RULES_PATH), help="cale catre rules.json")
+    p.add_argument("--rules", default=None,
+                   help="cale catre fisierul de reguli "
+                        "(implicit: cel din settings.json -> rules.file)")
     p.add_argument("--list-devices", action="store_true", help="listeaza device-urile audio")
     p.add_argument("--headless", action="store_true", help="fara interfata grafica")
     p.add_argument("--panel", action="store_true",
@@ -271,6 +274,22 @@ def main() -> int:
 
     log.info("=" * 62)
     log.info("MagicQ Audio Reactive Controller")
+    # Fara --rules se ia setul din configurare. ATENTIE: valoarea veche
+    # implicita era config/rules.json - setul generic pe playback-uri, care
+    # apasa PB1-PB10 chiar daca show-ul tau nu are nimic acolo.
+    if not args.rules:
+        args.rules = cfg.get("rules.file") or str(RULES_PATH)
+    rules_path = Path(args.rules)
+    if not rules_path.is_absolute():
+        rules_path = ROOT_APP / rules_path
+    if not rules_path.exists():
+        log.error("Fisierul de reguli %s nu exista.", rules_path)
+        fallback = ROOT_APP / "config" / "rules_execute.json"
+        if fallback.exists():
+            rules_path = fallback
+            log.warning("Se foloseste %s in loc.", fallback.name)
+    args.rules = str(rules_path)
+
     log.info("config: %s | reguli: %s", args.config, args.rules)
     log.info("DPI awareness: %s", dpi_mode)
     log.info("=" * 62)
