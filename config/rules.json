@@ -1,0 +1,170 @@
+{
+    "_comentariu": [
+        "REGULI IF / THEN pentru controlul MagicQ.",
+        "Formatul extins ('rules') iti da control complet; blocul 'simple' de la",
+        "final accepta forma scurta din specificatie. Ambele pot coexista.",
+        "",
+        "Campuri:",
+        "  name      - numele afisat in interfata",
+        "  on        - eveniment: DROP, BUILDUP, BREAK, CLIMAX, INTRO, OUTRO,",
+        "              GROOVE, BEAT, DOWNBEAT, ONSET, SILENCE, SIGNAL, BPM_CHANGE",
+        "  if        - conditie suplimentara pentru evenimente (optional)",
+        "  when      - expresie evaluata continuu (in loc de 'on')",
+        "  mode      - 'edge' (la trecerea in adevarat) sau 'level' (cat timp e adevarat)",
+        "  cooldown  - secunde minime intre doua declansari",
+        "  quantize  - 'off' | 'beat' | 'downbeat' (amana actiunea pana la beat)",
+        "  do / undo - lista de actiuni (undo se executa cand conditia dispare)",
+        "",
+        "Variabile: bpm, bass, sub, low_mid, mid, high, treble (0..100),",
+        "  rms (0..1), loudness, energy (0..100), brightness, flux, onset_rate,",
+        "  section, section_age, drop_score, buildup_score, drop_age,",
+        "  beat_in_bar (1..4), is_drop / is_buildup / is_break / ...",
+        "",
+        "IMPORTANT: numerele de playback si macro-urile de mai jos sunt EXEMPLE.",
+        "Ajusteaza-le la show-ul tau si defineste macro-urile in",
+        "config/settings.json -> magicq.keyboard.macros"
+    ],
+
+    "rules": [
+        {
+            "name": "DROP -> strobe + flash",
+            "on": "DROP",
+            "cooldown": 4.0,
+            "priority": 0,
+            "description": "La drop: flash puternic pe PB4 si macro-ul de strobe.",
+            "do": [
+                { "action": "pb_flash", "playback": 4, "duration": 1.2 },
+                { "action": "macro", "name": "strobe_on" }
+            ]
+        },
+        {
+            "name": "DROP -> strobe off dupa 2s",
+            "on": "DROP",
+            "cooldown": 4.0,
+            "priority": 6,
+            "description": "Oprirea strobe-ului; se trimite imediat dupa flash.",
+            "do": [
+                { "action": "macro", "name": "strobe_off" }
+            ],
+            "enabled": false
+        },
+        {
+            "name": "BUILDUP -> viteza mare",
+            "on": "BUILDUP",
+            "cooldown": 3.0,
+            "do": [
+                { "action": "speed", "percent": 200 },
+                { "action": "pb_go", "playback": 3 }
+            ]
+        },
+        {
+            "name": "BREAK -> elibereaza flash + strobe off",
+            "on": "BREAK",
+            "cooldown": 2.0,
+            "do": [
+                { "action": "pb_unflash", "playback": 4 },
+                { "action": "macro", "name": "strobe_off" },
+                { "action": "speed", "percent": 75 }
+            ]
+        },
+        {
+            "name": "CLIMAX -> tot pe maxim",
+            "on": "CLIMAX",
+            "cooldown": 6.0,
+            "do": [
+                { "action": "pb_level", "playback": 1, "level": 100 },
+                { "action": "pb_go", "playback": 6 }
+            ]
+        },
+        {
+            "name": "INTRO -> ambient",
+            "on": "INTRO",
+            "cooldown": 8.0,
+            "do": [
+                { "action": "pb_level", "playback": 1, "level": 40 },
+                { "action": "speed", "percent": 60 }
+            ]
+        },
+        {
+            "name": "OUTRO -> coborare",
+            "on": "OUTRO",
+            "cooldown": 10.0,
+            "do": [
+                { "action": "pb_level", "playback": 1, "level": 30 },
+                { "action": "speed", "percent": 50 }
+            ]
+        },
+        {
+            "name": "Bass puternic -> chase",
+            "when": "bass > 80",
+            "mode": "edge",
+            "cooldown": 1.5,
+            "do":   [ { "action": "pb_go", "playback": 5 } ],
+            "undo": [ { "action": "pb_release", "playback": 5 } ]
+        },
+        {
+            "name": "RMS foarte mare -> strobe",
+            "when": "rms > 0.9 and not is_break",
+            "mode": "edge",
+            "cooldown": 3.0,
+            "do":   [ { "action": "macro", "name": "strobe_on" } ],
+            "undo": [ { "action": "macro", "name": "strobe_off" } ]
+        },
+        {
+            "name": "Inalte -> schimbare culoare",
+            "when": "high > 70",
+            "mode": "edge",
+            "cooldown": 2.0,
+            "do": [ { "action": "macro", "name": "color_fx" } ]
+        },
+        {
+            "name": "BPM > 140 -> viteza 180%",
+            "when": "bpm > 140",
+            "mode": "edge",
+            "cooldown": 5.0,
+            "do":   [ { "action": "speed", "percent": 180 } ],
+            "undo": [ { "action": "speed", "percent": 100 } ]
+        },
+        {
+            "name": "BPM > 150 -> viteza 200%",
+            "when": "bpm > 150",
+            "mode": "edge",
+            "cooldown": 5.0,
+            "do": [ { "action": "speed", "percent": 200 } ]
+        },
+        {
+            "name": "Melodie lenta -> viteza mica",
+            "when": "bpm > 0 and bpm < 100",
+            "mode": "edge",
+            "cooldown": 5.0,
+            "do": [ { "action": "speed", "percent": 60 } ]
+        },
+        {
+            "name": "Downbeat -> bump pe PB2",
+            "on": "DOWNBEAT",
+            "if": "energy > 45 and not is_break",
+            "cooldown": 1.6,
+            "do": [ { "action": "pb_flash", "playback": 2, "duration": 0.12 } ],
+            "enabled": false
+        },
+        {
+            "name": "Kick pe beat -> flash scurt",
+            "on": "BEAT",
+            "if": "bass > 70 and is_drop",
+            "cooldown": 0.28,
+            "do": [ { "action": "pb_flash", "playback": 7, "duration": 0.09 } ],
+            "enabled": false
+        },
+        {
+            "name": "Liniste -> release all",
+            "on": "SILENCE",
+            "cooldown": 10.0,
+            "do": [ { "action": "release_all" } ]
+        }
+    ],
+
+    "simple": {
+        "_comentariu": "Forma scurta din specificatie - se poate folosi singura.",
+        "BPM>145": "Speed=190"
+    }
+}

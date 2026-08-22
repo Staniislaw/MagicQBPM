@@ -1,0 +1,131 @@
+{
+    "_comentariu": [
+        "SET MINIM: doar PLAYBACK 1, 2, 3 si 4.",
+        "",
+        "Rulare:",
+        "   py -3.12 main.py --rules config/rules_4pb.json --transport keyboard",
+        "",
+        "In MagicQ (o singura data):",
+        "   Setup -> View Settings -> MagicQ Keyboard Mode = 'Playback shortcuts'",
+        "   Tastele rezultate:  GO = Q W E R   |   STOP = A S D F",
+        "                       FLASH (toggle 100%) = \\  Z  X  C",
+        "",
+        "ROLURILE PRESUPUSE (schimba numerele daca la tine e altfel):",
+        "   PB1 = look de baza / wash        - sta pornit aproape tot timpul",
+        "   PB2 = chase / miscare            - intra pe build-up si groove",
+        "   PB3 = STROBE / flash puternic    - doar pe drop si pe kick",
+        "   PB4 = culoare / efect secundar   - alterneaza pe bass si climax",
+        "",
+        "Daca la tine PB3 nu e strobe, schimba doar numerele din 'playback'.",
+        "Reguli marcate cu \"enabled\": false sunt oprite - pornesc-le din",
+        "interfata (bifa din tabelul de reguli) cand vrei mai multa actiune."
+    ],
+
+    "rules": [
+        {
+            "name": "1. Start muzica -> look de baza",
+            "on": "SIGNAL",
+            "cooldown": 5.0,
+            "description": "Cand incepe sa se auda ceva, aprinde PB1.",
+            "do": [ { "action": "pb_go", "playback": 1 } ]
+        },
+        {
+            "name": "2. INTRO -> doar PB1",
+            "on": "INTRO",
+            "cooldown": 8.0,
+            "do": [
+                { "action": "pb_go", "playback": 1 },
+                { "action": "pb_release", "playback": 2 }
+            ]
+        },
+        {
+            "name": "3. GROOVE -> adauga chase PB2",
+            "on": "GROOVE",
+            "cooldown": 6.0,
+            "do": [ { "action": "pb_go", "playback": 2 } ]
+        },
+        {
+            "name": "4. BUILDUP -> chase PB2 + culoare PB4",
+            "on": "BUILDUP",
+            "cooldown": 4.0,
+            "do": [
+                { "action": "pb_go", "playback": 2 },
+                { "action": "pb_go", "playback": 4 }
+            ]
+        },
+        {
+            "name": "5. DROP -> STROBE PB3",
+            "on": "DROP",
+            "cooldown": 5.0,
+            "priority": 0,
+            "description": "Cea mai importanta regula: strobe 1.5 s pe drop.",
+            "do": [ { "action": "pb_flash", "playback": 3, "duration": 1.5 } ]
+        },
+        {
+            "name": "6. CLIMAX -> tot ce avem",
+            "on": "CLIMAX",
+            "cooldown": 8.0,
+            "do": [
+                { "action": "pb_go", "playback": 2 },
+                { "action": "pb_go", "playback": 4 }
+            ]
+        },
+        {
+            "name": "7. BREAK -> ramane doar PB1",
+            "on": "BREAK",
+            "cooldown": 3.0,
+            "do": [
+                { "action": "pb_release", "playback": 2 },
+                { "action": "pb_release", "playback": 4 },
+                { "action": "pb_go", "playback": 1 }
+            ]
+        },
+        {
+            "name": "8. OUTRO -> revenire linistita",
+            "on": "OUTRO",
+            "cooldown": 10.0,
+            "do": [
+                { "action": "pb_release", "playback": 2 },
+                { "action": "pb_release", "playback": 4 },
+                { "action": "pb_go", "playback": 1 }
+            ]
+        },
+        {
+            "name": "9. Bass puternic -> culoare PB4",
+            "when": "bass_avg > 70",
+            "mode": "edge",
+            "hold": 2.0,
+            "cooldown": 6.0,
+            "do":   [ { "action": "pb_go", "playback": 4 } ],
+            "undo": [ { "action": "pb_release", "playback": 4 } ]
+        },
+        {
+            "name": "10. Liniste -> elibereaza tot",
+            "on": "SILENCE",
+            "cooldown": 10.0,
+            "do": [
+                { "action": "pb_release", "playback": 2 },
+                { "action": "pb_release", "playback": 3 },
+                { "action": "pb_release", "playback": 4 }
+            ]
+        },
+
+        {
+            "name": "11. Kick in drop -> strobe scurt (optional)",
+            "on": "BEAT",
+            "if": "bass > 75 and is_drop",
+            "cooldown": 0.5,
+            "enabled": false,
+            "description": "Foarte agresiv. Porneste-l doar daca PB3 e un flash scurt.",
+            "do": [ { "action": "pb_flash", "playback": 3, "duration": 0.12 } ]
+        },
+        {
+            "name": "12. Downbeat -> bump PB2 (optional)",
+            "on": "DOWNBEAT",
+            "if": "energy > 55 and not is_break",
+            "cooldown": 1.8,
+            "enabled": false,
+            "do": [ { "action": "pb_flash", "playback": 2, "duration": 0.15 } ]
+        }
+    ]
+}

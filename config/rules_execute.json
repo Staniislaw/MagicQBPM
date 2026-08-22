@@ -1,0 +1,581 @@
+{
+    "_comentariu": [
+        "SHOW PRIN FEREASTRA EXECUTE - varianta finala.",
+        "Rulare:  py -3.12 main.py --rules config/rules_execute.json",
+        "",
+        "=========== CUM SE REZOLVA SUPRAPUNEREA EFECTELOR ===========",
+        "Butoanele CS sunt TOGGLE. Aplicatia nu poate sti ce era aprins",
+        "inainte sa porneasca, sau ce ai apasat tu manual. Doua mecanisme:",
+        "",
+        "  1. \"members\": lista completa a butoanelor din grup. La fiecare",
+        "     schimbare se trimite 'stinge' pentru TOTI ceilalti, nu doar",
+        "     pentru cel pe care il tine minte aplicatia.",
+        "  2. Transportul CITESTE DE PE ECRAN daca butonul e aprins (MagicQ",
+        "     il deseneaza rosu) si apasa doar daca starea trebuie schimbata.",
+        "     Deci un 'stinge' pe un buton deja stins nu face nimic.",
+        "",
+        "  Grupuri:  miscare = CS13 dinamic, CS14 medleac   (CS12 NU se foloseste)",
+        "            fx      = CS4, CS5, CS6, CS15, CS16",
+        "",
+        "=========== CULORILE ===========",
+        "Ca sa dai culoare trebuie INTAI selectat grupul, apoi paleta:",
+        "   grup_hybrid (G2) -> culoare      pentru capuri",
+        "   grup_par   (G1)  -> culoare      pentru paruri",
+        "Fiecare regula de culoare face exact asta. Perechile sunt alese sa",
+        "se combine (capuri albastru / paruri cyan etc).",
+        "",
+        "=========== MISCARILE ===========",
+        "Implicit capurile stau pe CS13 DINAMIC.",
+        "CS14 medleac se foloseste doar cand muzica scade: break, outro, liniste,",
+        "sau regula 15 (energie medie sub 45%, ori in scadere sustinuta).",
+        "",
+        "=========== BLACKOUT + FLASH PE BEAT ===========",
+        "La drop: blackout 2.2 s, iar in intuneric parurile fac flash pe fiecare",
+        "beat. Intervalul se ia din BPM-ul detectat, prin \"repeat\"/\"interval\".",
+        "",
+        "=========== SINCRONIZARE BPM ===========",
+        "   regula 10 -> rafala de tap-uri dupa fiecare tempo NOU",
+        "   regula 16 -> resincronizare la fiecare 32 de masuri (~50 s)",
+        "",
+        "=========== STROBE ===========",
+        "SEPARARE: detectorul e SENSIBIL (prag 0.64 - vede toate drop-urile si le",
+        "arata in interfata cu scorul lor), iar REGULILE aleg la care reactioneaza:",
+        "   regula 5 -> drop_score > 0.70  (miscare + fx)",
+        "   regula 6 -> drop_score > 0.75  (blackout + flash pe beat + strobe)",
+        "Pe piesa ta masurata: 5 drop-uri peste 0.70, 2 peste 0.75.",
+        "   regula 13 -> energie > 82% si bass sustinut, INDEPENDENT de detector",
+        "   regula 14 -> la CLIMAX",
+        "Daca vrei strobe la fiecare drop: scoate 'if' din regula 6.",
+        "",
+        "=========== DE REGLAT ===========",
+        "   strobe mai rar   -> cooldown 25 -> 45, sau adauga if: drop_score > 0.70",
+        "   strobe mai des   -> cooldown 25 -> 10",
+        "   culori mai dese  -> bar % 8  ->  bar % 4",
+        "   miscari mai dese -> exclusive_hold 30 -> 15"
+    ],
+    "rules": [
+        {
+            "name": "1. Muzica porneste -> paruri + miscare lenta",
+            "on": "SIGNAL",
+            "cooldown": 5.0,
+            "priority": 1,
+            "description": "Porneste de la o stare curata: stinge orice miscare ramasa aprinsa.",
+            "do": [
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "on_off_par",
+                    "ensure": "on"
+                },
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "misc_dinamic",
+                    "exclusive": "miscare",
+                    "members": [
+                        "misc_dinamic",
+                        "misc_medleac"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "2. INTRO -> miscare lenta",
+            "on": "INTRO",
+            "cooldown": 10.0,
+            "do": [
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "misc_dinamic",
+                    "exclusive": "miscare",
+                    "members": [
+                        "misc_dinamic",
+                        "misc_medleac"
+                    ],
+                    "exclusive_hold": 30
+                }
+            ]
+        },
+        {
+            "name": "3. GROOVE -> lent + fx1",
+            "on": "GROOVE",
+            "cooldown": 10.0,
+            "do": [
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "misc_dinamic",
+                    "exclusive": "miscare",
+                    "members": [
+                        "misc_dinamic",
+                        "misc_medleac"
+                    ],
+                    "exclusive_hold": 30
+                },
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "fx1",
+                    "exclusive": "fx",
+                    "exclusive_hold": 20,
+                    "members": [
+                        "fx1",
+                        "fx2",
+                        "fx3",
+                        "fx4",
+                        "fx5"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "4. BUILDUP -> dinamic + fx4",
+            "on": "BUILDUP",
+            "cooldown": 8.0,
+            "do": [
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "misc_dinamic",
+                    "exclusive": "miscare",
+                    "exclusive_hold": 20,
+                    "members": [
+                        "misc_dinamic",
+                        "misc_medleac"
+                    ]
+                },
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "fx4",
+                    "exclusive": "fx",
+                    "exclusive_hold": 20,
+                    "members": [
+                        "fx1",
+                        "fx2",
+                        "fx3",
+                        "fx4",
+                        "fx5"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "5. DROP -> dinamic + fx5",
+            "on": "DROP",
+            "cooldown": 8.0,
+            "priority": 1,
+            "do": [
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "misc_dinamic",
+                    "exclusive": "miscare",
+                    "exclusive_hold": 8,
+                    "members": [
+                        "misc_dinamic",
+                        "misc_medleac"
+                    ]
+                },
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "fx5",
+                    "exclusive": "fx",
+                    "exclusive_hold": 20,
+                    "members": [
+                        "fx1",
+                        "fx2",
+                        "fx3",
+                        "fx4",
+                        "fx5"
+                    ]
+                }
+            ],
+            "if": "drop_score > 0.70",
+            "description": "Miscarea si efectul: doar la drop-urile clare (>0.70)."
+        },
+        {
+            "name": "6. DROP -> BLACKOUT + flash pe beat + strobe",
+            "on": "DROP",
+            "cooldown": 20.0,
+            "priority": 0,
+            "description": "Blackout 2.2 s, iar in intuneric parurile dau flash pe fiecare beat (6 beat-uri, interval luat din BPM-ul detectat). Peste ele, strobe 1.6 s.",
+            "do": [
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "blackout",
+                    "duration": 2.2
+                },
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "flash_par",
+                    "duration": 0.12,
+                    "repeat": 6,
+                    "interval": "beat"
+                },
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "strobe",
+                    "duration": 1.6
+                },
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "grup_hybrid"
+                },
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "random": true,
+                    "cycle": [
+                        {
+                            "name": "rosu"
+                        },
+                        {
+                            "name": "magenta"
+                        },
+                        {
+                            "name": "albastru"
+                        }
+                    ]
+                }
+            ],
+            "if": "drop_score > 0.75"
+        },
+        {
+            "name": "7. CLIMAX -> dinamic + fx5",
+            "on": "CLIMAX",
+            "cooldown": 15.0,
+            "do": [
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "misc_dinamic",
+                    "exclusive": "miscare",
+                    "exclusive_hold": 12,
+                    "members": [
+                        "misc_dinamic",
+                        "misc_medleac"
+                    ]
+                },
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "fx5",
+                    "exclusive": "fx",
+                    "exclusive_hold": 20,
+                    "members": [
+                        "fx1",
+                        "fx2",
+                        "fx3",
+                        "fx4",
+                        "fx5"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "8. BREAK -> lent, calm, alb",
+            "on": "BREAK",
+            "cooldown": 8.0,
+            "do": [
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "misc_medleac",
+                    "exclusive": "miscare",
+                    "members": [
+                        "misc_dinamic",
+                        "misc_medleac"
+                    ],
+                    "exclusive_hold": 20
+                },
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "fx1",
+                    "exclusive": "fx",
+                    "exclusive_hold": 20,
+                    "members": [
+                        "fx1",
+                        "fx2",
+                        "fx3",
+                        "fx4",
+                        "fx5"
+                    ]
+                },
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "grup_hybrid"
+                },
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "alb"
+                }
+            ]
+        },
+        {
+            "name": "9. OUTRO -> lent + alb",
+            "on": "OUTRO",
+            "cooldown": 15.0,
+            "do": [
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "misc_medleac",
+                    "exclusive": "miscare",
+                    "members": [
+                        "misc_dinamic",
+                        "misc_medleac"
+                    ],
+                    "exclusive_hold": 20
+                },
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "grup_hybrid"
+                },
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "alb"
+                }
+            ]
+        },
+        {
+            "name": "10. TAP TEMPO - rafala la tempo nou",
+            "on": "BEAT",
+            "if": "bpm_age < 3.5 and bpm_conf > 0.45 and not is_silence",
+            "cooldown": 0.15,
+            "priority": 0,
+            "description": "Sincronizeaza Speed Master-ul, deci FX-urile CS4-CS16 merg in tempo.",
+            "do": [
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "tap_tempo"
+                }
+            ]
+        },
+        {
+            "name": "11. PERECHE DE CULORI la fiecare 8 masuri",
+            "on": "DOWNBEAT",
+            "if": "bar % 8 == 0 and not is_break and not is_silence",
+            "cooldown": 12.0,
+            "description": "Capuri o culoare, paruri alta care se combina. Grupul se selecteaza inainte de fiecare paleta.",
+            "do": [
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "grup_hybrid"
+                },
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "cycle": [
+                        {
+                            "name": "albastru"
+                        },
+                        {
+                            "name": "rosu"
+                        },
+                        {
+                            "name": "magenta"
+                        },
+                        {
+                            "name": "verde"
+                        },
+                        {
+                            "name": "amber"
+                        },
+                        {
+                            "name": "alb"
+                        },
+                        {
+                            "name": "uv"
+                        },
+                        {
+                            "name": "cyan"
+                        }
+                    ]
+                },
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "grup_par"
+                },
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "cycle": [
+                        {
+                            "name": "cyan"
+                        },
+                        {
+                            "name": "amber"
+                        },
+                        {
+                            "name": "albastru"
+                        },
+                        {
+                            "name": "cyan"
+                        },
+                        {
+                            "name": "rosu"
+                        },
+                        {
+                            "name": "albastru"
+                        },
+                        {
+                            "name": "magenta"
+                        },
+                        {
+                            "name": "albastru"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "12. Liniste -> reset complet",
+            "on": "SILENCE",
+            "cooldown": 10.0,
+            "priority": 0,
+            "description": "Stinge toate FX-urile si lasa doar miscarea lenta.",
+            "do": [
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "misc_medleac",
+                    "exclusive": "miscare",
+                    "members": [
+                        "misc_dinamic",
+                        "misc_medleac"
+                    ]
+                },
+                {
+                    "action": "exclusive_off",
+                    "group": "fx"
+                },
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "grup_hybrid"
+                },
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "alb"
+                }
+            ]
+        },
+        {
+            "name": "20. Kick in drop -> flash paruri (optional)",
+            "on": "BEAT",
+            "if": "bass > 78 and is_drop",
+            "cooldown": 0.6,
+            "enabled": false,
+            "do": [
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "flash_par",
+                    "duration": 0.25
+                }
+            ]
+        },
+        {
+            "name": "13. Energie mare brusca -> strobe scurt",
+            "when": "energy > 82 and bass_avg > 62 and not is_break",
+            "mode": "edge",
+            "hold": 4.0,
+            "cooldown": 18.0,
+            "description": "Al doilea declansator de strobe, independent de detectorul de DROP. Prinde momentele tari pe care detectorul de structura le rateaza (refrene, breakdown-uri scurte).",
+            "do": [
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "strobe",
+                    "duration": 1.0
+                },
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "flash_par",
+                    "duration": 0.4
+                }
+            ]
+        },
+        {
+            "name": "14. CLIMAX -> strobe",
+            "on": "CLIMAX",
+            "cooldown": 30.0,
+            "do": [
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "strobe",
+                    "duration": 1.2
+                }
+            ]
+        },
+        {
+            "name": "15. Muzica scade lent -> medleac",
+            "when": "energy_mid < 45 or (energy_slope < -0.02 and energy_mid < 62)",
+            "mode": "edge",
+            "hold": 6.0,
+            "cooldown": 20.0,
+            "description": "CS14 medleac se foloseste DOAR cand muzica chiar incetineste/scade. In rest capurile stau pe CS13 dinamic.",
+            "do": [
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "misc_medleac",
+                    "exclusive": "miscare",
+                    "members": [
+                        "misc_dinamic",
+                        "misc_medleac"
+                    ],
+                    "exclusive_hold": 15
+                }
+            ],
+            "undo": [
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "misc_dinamic",
+                    "exclusive": "miscare",
+                    "members": [
+                        "misc_dinamic",
+                        "misc_medleac"
+                    ],
+                    "exclusive_hold": 15
+                }
+            ]
+        },
+        {
+            "name": "16. Resincronizare BPM periodica",
+            "on": "DOWNBEAT",
+            "if": "bar % 32 == 0 and bpm_conf > 0.5 and not is_silence",
+            "cooldown": 45.0,
+            "priority": 0,
+            "description": "La fiecare 32 de masuri (~50 s) trimite 6 tap-uri pe beat-uri succesive, ca Speed Master-ul sa nu ramana in urma. Intervalul vine din BPM-ul curent.",
+            "do": [
+                {
+                    "action": "palette",
+                    "window": "exec",
+                    "name": "tap_tempo",
+                    "repeat": 6,
+                    "interval": "beat"
+                }
+            ]
+        }
+    ]
+}

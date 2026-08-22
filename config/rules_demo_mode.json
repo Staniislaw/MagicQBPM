@@ -1,0 +1,111 @@
+{
+    "_comentariu": [
+        "REGULI PENTRU MagicQ PC IN DEMO MODE (fara wing / interfata ChamSys).",
+        "",
+        "Rulare:  py -3.12 main.py --rules config/rules_demo_mode.json",
+        "",
+        "In Demo Mode NU sunt disponibile OSC, MIDI si protocolul remote",
+        "ChamSys - vezi README §5. Singura cale de control este TASTATURA,",
+        "prin scurtaturile oficiale MagicQ:",
+        "     Q..P  = GO pe playback-urile 1..10",
+        "     A..;  = STOP pe playback-urile 1..10",
+        "     \\ Z X C V B N M , .  = toggle playback la 100% (FLASH)",
+        "",
+        "INAINTE DE RULARE, in MagicQ:",
+        "  Setup -> View Settings -> MagicQ Keyboard Mode = 'Playback shortcuts'",
+        "",
+        "De aceea aceste reguli folosesc DOAR actiuni pe playback-urile 1-10:",
+        "fara 'speed', fara 'macro', fara 'exec', fara 'blackout' - acelea nu",
+        "au scurtaturi de tastatura si ar esua.",
+        "",
+        "Programeaza in MagicQ, pe playback-uri:",
+        "   PB1 look de baza     PB2 bump scurt      PB3 chase rapid",
+        "   PB4 STROBE           PB5 chase pe bass   PB6 totul pornit",
+        "   PB7 flash scurt      PB8 look de break"
+    ],
+
+    "rules": [
+        {
+            "name": "DROP -> strobe PB4",
+            "on": "DROP",
+            "cooldown": 4.0,
+            "priority": 0,
+            "do": [
+                { "action": "pb_flash", "playback": 4, "duration": 1.5 },
+                { "action": "pb_go", "playback": 6 }
+            ]
+        },
+        {
+            "name": "BUILDUP -> chase rapid PB3",
+            "on": "BUILDUP",
+            "cooldown": 3.0,
+            "do": [ { "action": "pb_go", "playback": 3 } ]
+        },
+        {
+            "name": "BREAK -> look linistit PB8",
+            "on": "BREAK",
+            "cooldown": 2.5,
+            "do": [
+                { "action": "pb_release", "playback": 3 },
+                { "action": "pb_release", "playback": 5 },
+                { "action": "pb_go", "playback": 8 }
+            ]
+        },
+        {
+            "name": "CLIMAX -> totul pornit PB6",
+            "on": "CLIMAX",
+            "cooldown": 6.0,
+            "do": [ { "action": "pb_go", "playback": 6 } ]
+        },
+        {
+            "name": "INTRO -> look de baza PB1",
+            "on": "INTRO",
+            "cooldown": 8.0,
+            "do": [ { "action": "pb_go", "playback": 1 } ]
+        },
+        {
+            "name": "OUTRO -> revenire la PB1",
+            "on": "OUTRO",
+            "cooldown": 10.0,
+            "do": [
+                { "action": "pb_release", "playback": 6 },
+                { "action": "pb_go", "playback": 1 }
+            ]
+        },
+        {
+            "name": "Bass puternic -> chase PB5",
+            "when": "bass_avg > 70",
+            "mode": "edge",
+            "hold": 2.0,
+            "cooldown": 6.0,
+            "do":   [ { "action": "pb_go", "playback": 5 } ],
+            "undo": [ { "action": "pb_release", "playback": 5 } ]
+        },
+        {
+            "name": "Downbeat -> bump PB2",
+            "on": "DOWNBEAT",
+            "if": "energy > 50 and not is_break",
+            "cooldown": 1.8,
+            "do": [ { "action": "pb_flash", "playback": 2, "duration": 0.15 } ],
+            "enabled": false
+        },
+        {
+            "name": "Kick tare in drop -> flash PB7",
+            "on": "BEAT",
+            "if": "bass > 75 and is_drop",
+            "cooldown": 0.45,
+            "do": [ { "action": "pb_flash", "playback": 7, "duration": 0.12 } ],
+            "enabled": false
+        },
+        {
+            "name": "Liniste -> elibereaza tot",
+            "on": "SILENCE",
+            "cooldown": 10.0,
+            "do": [
+                { "action": "pb_release", "playback": 3 },
+                { "action": "pb_release", "playback": 5 },
+                { "action": "pb_release", "playback": 6 }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,41 @@
+# ============================================================
+#  MagicQ Audio Reactive Controller - dependinte
+#  Python 3.12 / Windows
+#  Instalare:  py -3.12 -m pip install -r requirements.txt
+# ============================================================
+
+# --- OBLIGATORII ---------------------------------------------------
+numpy>=1.26,<3
+scipy>=1.11
+sounddevice>=0.5.0        # microfon + enumerarea device-urilor
+PyQt6>=6.6                # interfata grafica
+python-osc>=1.8           # transport OSC catre MagicQ
+
+# --- CAPTURA SUNETULUI REDAT DE PC (WASAPI loopback) ----------------
+# PortAudio-ul din sounddevice (19.7.0-devel) NU expune loopback-ul WASAPI,
+# deci este nevoie de cel putin unul dintre acestea. `soundcard` este
+# recomandat (testat: captura la 48 kHz direct, latenta mica).
+soundcard>=0.4.3
+PyAudioWPatch>=0.2.12     # rezerva: fork de PyAudio cu device-uri [Loopback]
+
+# --- RECOMANDATE (transport MIDI + input Windows) -------------------
+mido>=1.3
+python-rtmidi>=1.5        # backend real pentru mido
+pywin32>=306              # focus fereastra MagicQ, SendInput, mouse
+
+# --- OPTIONALE ------------------------------------------------------
+pynput>=1.7               # alternativa la SendInput (fallback)
+keyboard>=0.13            # hotkey-uri globale (PANIC / BLACKOUT)
+scikit-learn>=1.4         # clasificator ML de sectiuni (optional)
+joblib>=1.3               # incarcare model ML antrenat
+
+# --- OPTIONALE, DOAR OFFLINE (antrenare model / analiza fisiere) ----
+# librosa NU se foloseste in bucla realtime (prea lent), doar la
+# antrenarea modelului de sectiuni din tools/train_sections.py
+# librosa>=0.10
+#
+# aubio NU are wheel pentru Python 3.12 (ultimul wheel oficial: 3.9).
+# Detectia de beat/onset/BPM este implementata nativ in numpy/scipy,
+# deci aubio nu este necesar. Daca il compilezi manual, modulul
+# audio/beat.py il va folosi automat ca sursa secundara.
+# aubio>=0.4.9

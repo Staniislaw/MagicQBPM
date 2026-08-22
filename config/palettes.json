@@ -1,0 +1,114 @@
+{
+    "_comentariu": [
+        "COMBINATII DE CULORI pentru panoul BPM & CULORI.",
+        "",
+        "TREI tinte, fiecare cu grupul ei din fereastra Execute:",
+        "   cap1 = IntHybrid140SR   (buton 'grup_hybrid',   G2)",
+        "   cap2 = IntBeamQ60       (buton 'grup_beamq60',  G3)",
+        "   par  = SlimPARProPix    (buton 'grup_par',      G1)",
+        "",
+        "Un click aplica toate trei: selecteaza grupul, apasa culoarea, de",
+        "trei ori. Nimic nu se intampla singur - doar la click.",
+        "",
+        "Cum sunt alese:",
+        "   analog     = culori vecine (albastru+cyan) -> unitar, calm",
+        "   complement = culori opuse (albastru+amber) -> contrast, adancime",
+        "   split      = o culoare + doua vecine ale opusului ei",
+        "",
+        "Reguli de scena respectate:",
+        "   - cele doua tipuri de capuri NU primesc aceeasi culoare (se",
+        "     pierde separarea intre ele)",
+        "   - parul e fundalul: sau leaga cele doua capuri, sau le taie net",
+        "   - fara rosu si verde pe fixturi apropiate (dau maro pe pereti)",
+        "",
+        "Numele culorilor sunt din magicq.mouse.exec_buttons.",
+        "'rgb' e doar pentru pastilele colorate din interfata."
+    ],
+
+    "scheme": [
+        {
+            "nume": "Ocean",
+            "tip": "analog rece",
+            "cap1": "albastru", "cap2": "cyan", "par": "albastru",
+            "rgb": ["#3c5aff", "#3cdce6", "#3c5aff"]
+        },
+        {
+            "nume": "Foc",
+            "tip": "analog cald",
+            "cap1": "rosu", "cap2": "amber", "par": "rosu",
+            "rgb": ["#ff2828", "#ff9628", "#ff2828"]
+        },
+        {
+            "nume": "Sunset",
+            "tip": "gradient cald",
+            "cap1": "magenta", "cap2": "amber", "par": "rosu",
+            "rgb": ["#ff3cc8", "#ff9628", "#ff2828"]
+        },
+        {
+            "nume": "Miami",
+            "tip": "complement pastel",
+            "cap1": "cyan", "cap2": "magenta", "par": "roz",
+            "rgb": ["#3cdce6", "#ff3cc8", "#ff8cc8"]
+        },
+        {
+            "nume": "Ultraviolet",
+            "tip": "adanc",
+            "cap1": "uv", "cap2": "magenta", "par": "albastru",
+            "rgb": ["#823cdc", "#ff3cc8", "#3c5aff"]
+        },
+        {
+            "nume": "Regal",
+            "tip": "analog rece",
+            "cap1": "uv", "cap2": "albastru", "par": "magenta",
+            "rgb": ["#823cdc", "#3c5aff", "#ff3cc8"]
+        },
+        {
+            "nume": "Contrast",
+            "tip": "complement dur",
+            "cap1": "albastru", "cap2": "rosu", "par": "alb",
+            "rgb": ["#3c5aff", "#ff2828", "#ffffff"]
+        },
+        {
+            "nume": "Toxic",
+            "tip": "analog",
+            "cap1": "verde", "cap2": "cyan", "par": "verde",
+            "rgb": ["#3cdc5a", "#3cdce6", "#3cdc5a"]
+        },
+        {
+            "nume": "Alb cald",
+            "tip": "neutru + accent",
+            "cap1": "alb", "cap2": "amber", "par": "amber",
+            "rgb": ["#ffffff", "#ff9628", "#ff9628"]
+        },
+        {
+            "nume": "Alb rece",
+            "tip": "neutru + accent",
+            "cap1": "alb", "cap2": "albastru", "par": "cyan",
+            "rgb": ["#ffffff", "#3c5aff", "#3cdce6"]
+        },
+        {
+            "nume": "Lime",
+            "tip": "analog cald",
+            "cap1": "galben", "cap2": "verde", "par": "amber",
+            "rgb": ["#ffe63c", "#3cdc5a", "#ff9628"]
+        },
+        {
+            "nume": "Candy",
+            "tip": "triadic",
+            "cap1": "magenta", "cap2": "cyan", "par": "roz",
+            "rgb": ["#ff3cc8", "#3cdce6", "#ff8cc8"]
+        },
+        {
+            "nume": "Split",
+            "tip": "split complement",
+            "cap1": "amber", "cap2": "albastru", "par": "cyan",
+            "rgb": ["#ff9628", "#3c5aff", "#3cdce6"]
+        },
+        {
+            "nume": "Tot alb",
+            "tip": "reset",
+            "cap1": "alb", "cap2": "alb", "par": "alb",
+            "rgb": ["#ffffff", "#ffffff", "#ffffff"]
+        }
+    ]
+}

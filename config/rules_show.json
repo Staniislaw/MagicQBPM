@@ -1,0 +1,197 @@
+{
+    "_comentariu": [
+        "SHOW-UL TAU REAL (9 playback-uri).",
+        "",
+        "Rulare:   py -3.12 main.py --rules config/rules_show.json",
+        "",
+        "MAPARE (din show-ul tau):",
+        "   PB1 flash             flash                        tasta GO=q  FLASH=\\",
+        "   PB2 sus jos           MISCARE medie (capuri)       GO=w  FLASH=z",
+        "   PB3 dinamic           MISCARE rapida               GO=e  FLASH=x",
+        "   PB4 medleac           MISCARE lenta (dans lent)    GO=r  FLASH=c",
+        "   PB5 Fx4               efect                        GO=t  FLASH=v",
+        "   PB6 fx 5              efect                        GO=y  FLASH=b",
+        "   PB7 black spot        ? (nefolosit - vezi mai jos) GO=u  FLASH=n",
+        "   PB8 par caemca        par-uri / culoare de baza    GO=i  FLASH=m",
+        "   PB9 speed par caemca  ? (nefolosit - vezi mai jos) GO=o  FLASH=,",
+        "",
+        "PRINCIPIUL CHEIE: PB2, PB3 si PB4 sunt toate MISCARE pe aceleasi",
+        "capuri, deci se exclud reciproc. Fiecare regula de sectiune",
+        "ELIBEREAZA celelalte doua inainte sa porneasca a treia:",
+        "",
+        "   INTRO / BREAK / OUTRO  ->  PB4 medleac   (lent)",
+        "   GROOVE                 ->  PB2 sus jos   (mediu)",
+        "   BUILDUP / DROP / CLIMAX->  PB3 dinamic   (rapid)",
+        "",
+        "PB7 'black spot' si PB9 'speed par caemca' nu sunt folosite: nu stiu",
+        "ce fac. Daca PB7 e un blackout, l-as declansa gresit si ti-as stinge",
+        "show-ul. Spune-mi ce sunt si le adaug.",
+        "",
+        "LIMITARE: prin tastatura NU se pot seta niveluri de fader, doar",
+        "GO / FLASH / RELEASE. Deci daca PB9 e un fader de viteza, nu poate fi",
+        "controlat asa - ar trebui mouse (tragere de fader) sau OSC."
+    ],
+
+    "rules": [
+        {
+            "name": "1. Muzica porneste -> par-uri",
+            "on": "SIGNAL",
+            "cooldown": 5.0,
+            "description": "PB8 (par caemca) ramane baza tot show-ul.",
+            "do": [ { "action": "pb_go", "playback": 8 } ]
+        },
+
+        {
+            "name": "2. INTRO -> miscare lenta (medleac)",
+            "on": "INTRO",
+            "cooldown": 8.0,
+            "do": [
+                { "action": "pb_release", "playback": 2 },
+                { "action": "pb_release", "playback": 3 },
+                { "action": "pb_go",      "playback": 4 },
+                { "action": "pb_go",      "playback": 8 }
+            ]
+        },
+
+        {
+            "name": "3. GROOVE -> capuri sus-jos",
+            "on": "GROOVE",
+            "cooldown": 6.0,
+            "description": "Ritm constant, fara drama: miscarea medie.",
+            "do": [
+                { "action": "pb_release", "playback": 3 },
+                { "action": "pb_release", "playback": 4 },
+                { "action": "pb_go",      "playback": 2 }
+            ]
+        },
+
+        {
+            "name": "4. BUILDUP -> dinamic + Fx4",
+            "on": "BUILDUP",
+            "cooldown": 4.0,
+            "description": "Creste tensiunea: miscare rapida si primul efect.",
+            "do": [
+                { "action": "pb_release", "playback": 2 },
+                { "action": "pb_release", "playback": 4 },
+                { "action": "pb_go",      "playback": 3 },
+                { "action": "pb_go",      "playback": 5 }
+            ]
+        },
+
+        {
+            "name": "5. DROP -> flash + dinamic + fx5",
+            "on": "DROP",
+            "cooldown": 5.0,
+            "priority": 0,
+            "description": "Cea mai importanta regula din tot fisierul.",
+            "do": [
+                { "action": "pb_flash",   "playback": 1, "duration": 1.5 },
+                { "action": "pb_release", "playback": 2 },
+                { "action": "pb_release", "playback": 4 },
+                { "action": "pb_go",      "playback": 3 },
+                { "action": "pb_go",      "playback": 6 }
+            ]
+        },
+
+        {
+            "name": "6. CLIMAX -> tot ce misca",
+            "on": "CLIMAX",
+            "cooldown": 8.0,
+            "do": [
+                { "action": "pb_go", "playback": 3 },
+                { "action": "pb_go", "playback": 5 },
+                { "action": "pb_go", "playback": 6 }
+            ]
+        },
+
+        {
+            "name": "7. BREAK -> lent, fara efecte",
+            "on": "BREAK",
+            "cooldown": 3.0,
+            "do": [
+                { "action": "pb_release", "playback": 2 },
+                { "action": "pb_release", "playback": 3 },
+                { "action": "pb_release", "playback": 5 },
+                { "action": "pb_release", "playback": 6 },
+                { "action": "pb_go",      "playback": 4 }
+            ]
+        },
+
+        {
+            "name": "8. OUTRO -> revenire linistita",
+            "on": "OUTRO",
+            "cooldown": 10.0,
+            "do": [
+                { "action": "pb_release", "playback": 2 },
+                { "action": "pb_release", "playback": 3 },
+                { "action": "pb_release", "playback": 5 },
+                { "action": "pb_release", "playback": 6 },
+                { "action": "pb_go",      "playback": 4 }
+            ]
+        },
+
+        {
+            "name": "9. Energie mare sustinuta -> fx 5",
+            "when": "energy_mid > 70",
+            "mode": "edge",
+            "hold": 3.0,
+            "cooldown": 8.0,
+            "description": "Foloseste media pe 3 s, nu valoarea instantanee.",
+            "do":   [ { "action": "pb_go",      "playback": 6 } ],
+            "undo": [ { "action": "pb_release", "playback": 6 } ]
+        },
+
+        {
+            "name": "10. Bass sustinut -> Fx4",
+            "when": "bass_avg > 72",
+            "mode": "edge",
+            "hold": 3.0,
+            "cooldown": 8.0,
+            "do":   [ { "action": "pb_go",      "playback": 5 } ],
+            "undo": [ { "action": "pb_release", "playback": 5 } ]
+        },
+
+        {
+            "name": "11. Liniste -> elibereaza tot",
+            "on": "SILENCE",
+            "cooldown": 10.0,
+            "description": "Ramane doar PB8 (par-urile), ca sa nu ramai pe intuneric.",
+            "do": [
+                { "action": "pb_release", "playback": 1 },
+                { "action": "pb_release", "playback": 2 },
+                { "action": "pb_release", "playback": 3 },
+                { "action": "pb_release", "playback": 5 },
+                { "action": "pb_release", "playback": 6 }
+            ]
+        },
+
+        {
+            "name": "12. Kick in drop -> flash scurt (optional)",
+            "on": "BEAT",
+            "if": "bass > 75 and is_drop",
+            "cooldown": 0.5,
+            "enabled": false,
+            "description": "Agresiv: flash PB1 pe fiecare kick tare din drop.",
+            "do": [ { "action": "pb_flash", "playback": 1, "duration": 0.12 } ]
+        },
+
+        {
+            "name": "13. Downbeat -> flash pe masura (optional)",
+            "on": "DOWNBEAT",
+            "if": "energy > 55 and not is_break",
+            "cooldown": 1.8,
+            "enabled": false,
+            "description": "Flash PB1 pe primul timp al fiecarei masuri.",
+            "do": [ { "action": "pb_flash", "playback": 1, "duration": 0.15 } ]
+        },
+
+        {
+            "name": "14. PB7 'black spot' - NEFOLOSIT",
+            "on": "BREAK",
+            "cooldown": 10.0,
+            "enabled": false,
+            "description": "Sablon gol. Nu stiu ce face PB7. Daca e un look de spot, activeaza regula. Daca e blackout, NU o activa.",
+            "do": [ { "action": "pb_go", "playback": 7 } ]
+        }
+    ]
+}

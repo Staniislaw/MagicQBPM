@@ -1,0 +1,260 @@
+{
+    "_comentariu": [
+        "SHOW COMPLET: playback-uri (tastatura) + PALETE de pe pagina (mouse).",
+        "",
+        "INAINTE DE PRIMA RULARE:",
+        "   py -3.12 tools/calibrate_palettes.py",
+        "verifica apoi o casuta, fara click:",
+        "   py -3.12 tools/calibrate_palettes.py --test beam 4",
+        "",
+        "Rulare:  py -3.12 main.py --rules config/rules_show_palette.json",
+        "",
+        "PALETELE DIN SHOW-UL TAU (din poza):",
+        "   GRUPURI : G1 SlimPARProPix | G2 IntHybrid140SR | G3 IntBeamQ60",
+        "             G5 AFH600 | G7 centru | G12 perete",
+        "   BEAM    : B1 Shut open | B2 Shut slow | B3 Shut med | B4 Shut fast",
+        "             B5 Open | B6+ gobo-uri statice | B22-B25 gobo shake",
+        "   COLOUR  : C1 White C2 Red C3 Amber C4 Yellow C5 Green",
+        "             C6 Cyan C7 Blue C8 Pink C9 UV C10 Magenta",
+        "   POSITION: P1 centre P2 far left P3 far right P4 far up P5 far down",
+        "             P6 left P7 right P8 up P9 down",
+        "",
+        "ROTATIA: \"cycle\": [2, 5, 7, 10] inseamna ca la fiecare declansare",
+        "se ia urmatoarea valoare din lista. Cu \"random\": true se alege",
+        "aleator. \"labels\" apar doar in jurnal, ca sa citesti usor.",
+        "",
+        "!!! FOARTE IMPORTANT - PROGRAMATORUL !!!",
+        "Paletele scriu in PROGRAMATOR, care are prioritate peste TOATE",
+        "playback-urile pana la CLEAR. Adica dupa ce pui 'Shut fast' pe capuri,",
+        "ramane asa chiar daca playback-urile se schimba. De aceea:",
+        "   - regula 20 da CLEAR la liniste (intre piese)",
+        "   - regula 21 da CLEAR la outro",
+        "Daca butonul CLEAR nu e calibrat, acele reguli vor esua vizibil in",
+        "jurnal - nu tacut."
+    ],
+
+    "rules": [
+        {
+            "name": "1. Muzica porneste -> par-uri",
+            "on": "SIGNAL",
+            "cooldown": 5.0,
+            "do": [ { "action": "pb_go", "playback": 8 } ]
+        },
+        {
+            "name": "2. INTRO -> miscare lenta",
+            "on": "INTRO",
+            "cooldown": 8.0,
+            "do": [
+                { "action": "pb_release", "playback": 2 },
+                { "action": "pb_release", "playback": 3 },
+                { "action": "pb_go",      "playback": 4 },
+                { "action": "pb_go",      "playback": 8 }
+            ]
+        },
+        {
+            "name": "3. GROOVE -> capuri sus-jos",
+            "on": "GROOVE",
+            "cooldown": 6.0,
+            "do": [
+                { "action": "pb_release", "playback": 3 },
+                { "action": "pb_release", "playback": 4 },
+                { "action": "pb_go",      "playback": 2 }
+            ]
+        },
+        {
+            "name": "4. BUILDUP -> dinamic + Fx4",
+            "on": "BUILDUP",
+            "cooldown": 4.0,
+            "do": [
+                { "action": "pb_release", "playback": 2 },
+                { "action": "pb_release", "playback": 4 },
+                { "action": "pb_go",      "playback": 3 },
+                { "action": "pb_go",      "playback": 5 }
+            ]
+        },
+        {
+            "name": "5. DROP -> flash + dinamic + fx5",
+            "on": "DROP",
+            "cooldown": 5.0,
+            "priority": 0,
+            "do": [
+                { "action": "pb_flash",   "playback": 1, "duration": 1.5 },
+                { "action": "pb_release", "playback": 2 },
+                { "action": "pb_release", "playback": 4 },
+                { "action": "pb_go",      "playback": 3 },
+                { "action": "pb_go",      "playback": 6 }
+            ]
+        },
+        {
+            "name": "6. CLIMAX -> tot ce misca",
+            "on": "CLIMAX",
+            "cooldown": 8.0,
+            "do": [
+                { "action": "pb_go", "playback": 3 },
+                { "action": "pb_go", "playback": 5 },
+                { "action": "pb_go", "playback": 6 }
+            ]
+        },
+        {
+            "name": "7. BREAK -> lent, fara efecte",
+            "on": "BREAK",
+            "cooldown": 3.0,
+            "do": [
+                { "action": "pb_release", "playback": 2 },
+                { "action": "pb_release", "playback": 3 },
+                { "action": "pb_release", "playback": 5 },
+                { "action": "pb_release", "playback": 6 },
+                { "action": "pb_go",      "playback": 4 }
+            ]
+        },
+        {
+            "name": "8. OUTRO -> revenire linistita",
+            "on": "OUTRO",
+            "cooldown": 10.0,
+            "do": [
+                { "action": "pb_release", "playback": 2 },
+                { "action": "pb_release", "playback": 3 },
+                { "action": "pb_release", "playback": 5 },
+                { "action": "pb_release", "playback": 6 },
+                { "action": "pb_go",      "playback": 4 }
+            ]
+        },
+
+        {
+            "name": "10. DROP -> capuri pe SHUT FAST",
+            "on": "DROP",
+            "cooldown": 5.0,
+            "priority": 1,
+            "description": "Exact ce ai cerut: selecteaza G2 IntHybrid140SR si aplica B4 Shut fast.",
+            "do": [
+                { "action": "palette", "window": "beam", "group": 2,
+                  "item": 4, "label": "Shut fast" }
+            ]
+        },
+        {
+            "name": "11. BUILDUP -> shutter mediu, se accelereaza",
+            "on": "BUILDUP",
+            "cooldown": 4.0,
+            "do": [
+                { "action": "palette", "window": "beam", "group": 2,
+                  "item": 3, "label": "Shut med" }
+            ]
+        },
+        {
+            "name": "12. BREAK -> shutter lent",
+            "on": "BREAK",
+            "cooldown": 3.0,
+            "do": [
+                { "action": "palette", "window": "beam", "group": 2,
+                  "item": 2, "label": "Shut slow" }
+            ]
+        },
+        {
+            "name": "13. GROOVE -> shutter deschis",
+            "on": "GROOVE",
+            "cooldown": 6.0,
+            "do": [
+                { "action": "palette", "window": "beam", "group": 2,
+                  "item": 1, "label": "Shut open" }
+            ]
+        },
+
+        {
+            "name": "14. Culoare noua la fiecare 4 masuri",
+            "on": "DOWNBEAT",
+            "if": "bar % 4 == 0 and not is_break and not is_silence",
+            "cooldown": 3.0,
+            "description": "Roteste culorile pe capuri. Editeaza lista dupa gust.",
+            "do": [
+                { "action": "palette", "window": "colour", "group": 2,
+                  "cycle": [2, 5, 7, 10, 6, 8],
+                  "labels": ["Red", "Green", "Blue", "Magenta", "Cyan", "Pink"] }
+            ]
+        },
+        {
+            "name": "15. DROP -> culoare aleatoare, puternica",
+            "on": "DROP",
+            "cooldown": 5.0,
+            "priority": 2,
+            "do": [
+                { "action": "palette", "window": "colour", "group": 2,
+                  "cycle": [2, 10, 7, 5], "random": true,
+                  "labels": ["Red", "Magenta", "Blue", "Green"] }
+            ]
+        },
+        {
+            "name": "16. BREAK -> alb / cyan, calm",
+            "on": "BREAK",
+            "cooldown": 4.0,
+            "do": [
+                { "action": "palette", "window": "colour", "group": 2,
+                  "cycle": [1, 6], "labels": ["White", "Cyan"] }
+            ]
+        },
+        {
+            "name": "17. Par-urile primesc si ele culoare",
+            "on": "DOWNBEAT",
+            "if": "bar % 8 == 0 and not is_silence",
+            "cooldown": 6.0,
+            "enabled": false,
+            "description": "La fel, dar pe G1 SlimPARProPix. Porneste-o daca vrei par-urile sincronizate.",
+            "do": [
+                { "action": "palette", "window": "colour", "group": 1,
+                  "cycle": [2, 7, 5, 10], "labels": ["Red", "Blue", "Green", "Magenta"] }
+            ]
+        },
+        {
+            "name": "18. Pozitie noua la schimbarea sectiunii",
+            "on": "SECTION_CHANGE",
+            "cooldown": 8.0,
+            "enabled": false,
+            "description": "Roteste pozitiile. Dezactivata implicit: verifica intai ca P1-P9 arata bine la tine.",
+            "do": [
+                { "action": "palette", "window": "position", "group": 2,
+                  "cycle": [1, 4, 2, 3, 8], "labels": ["centre", "far up", "far left", "far right", "up"] }
+            ]
+        },
+        {
+            "name": "19. CLIMAX -> gobo shake",
+            "on": "CLIMAX",
+            "cooldown": 10.0,
+            "enabled": false,
+            "description": "B22-B25 sunt gobo shake in show-ul tau. Verifica numerele.",
+            "do": [
+                { "action": "palette", "window": "beam", "group": 2,
+                  "cycle": [22, 23, 24, 25], "random": true }
+            ]
+        },
+
+        {
+            "name": "20. Liniste -> CLEAR programator + release",
+            "on": "SILENCE",
+            "cooldown": 10.0,
+            "priority": 0,
+            "description": "OBLIGATORIU: fara CLEAR, paletele raman peste playback-uri.",
+            "do": [
+                { "action": "clear" },
+                { "action": "pb_release", "playback": 1 },
+                { "action": "pb_release", "playback": 2 },
+                { "action": "pb_release", "playback": 3 },
+                { "action": "pb_release", "playback": 5 },
+                { "action": "pb_release", "playback": 6 }
+            ]
+        },
+        {
+            "name": "21. OUTRO -> CLEAR programator",
+            "on": "OUTRO",
+            "cooldown": 15.0,
+            "do": [ { "action": "clear" } ]
+        },
+
+        {
+            "name": "30. Kick in drop -> flash scurt (optional)",
+            "on": "BEAT",
+            "if": "bass > 75 and is_drop",
+            "cooldown": 0.5,
+            "enabled": false,
+            "do": [ { "action": "pb_flash", "playback": 1, "duration": 0.12 } ]
+        }
+    ]
+}

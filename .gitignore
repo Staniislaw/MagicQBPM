@@ -1,0 +1,30 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# ---- Jurnale si inregistrari ----
+# Contin numele device-urilor audio si titluri de ferestre de pe PC-ul tau
+logs/
+*.log
+analysis.csv
+
+# ---- Configurarea LOCALA a masinii ----
+# settings.json contine calibrarea mouse-ului (coordonate valabile doar
+# pentru rezolutia si marimea ferestrei MagicQ de pe PC-ul tau) si numele
+# device-ului audio. NU are ce cauta in git: se genereaza automat la prima
+# pornire din valorile implicite, iar sablonul e in settings.example.json.
+config/settings.json
+
+# ---- Modele ML antrenate ----
+*.joblib
+
+# ---- Sistem ----
+Thumbs.db
+desktop.ini
+.DS_Store
+.idea/
+.vscode/
