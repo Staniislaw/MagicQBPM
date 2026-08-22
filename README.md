@@ -12,7 +12,39 @@ climax / outro), apoi trimite comenzi catre MagicQ prin **OSC → MIDI → tasta
 
 ---
 
-## 1. Instalare
+## 0. Varianta fara Python (.exe)
+
+Pe un PC fara Python, foloseste executabilul. Il construiesti pe masina de
+dezvoltare cu:
+
+```bash
+py -3.12 build_exe.py
+```
+
+Rezulta `dist/MagicQBPM/` - se copiaza intreg pe celalalt PC. Contine
+`MagicQBPM.exe`, folderul `config/` editabil, `CITESTE-MA.txt` si scurtaturi
+`.bat` numerotate pentru pasii de configurare.
+
+Este build **onedir**, nu onefile: cu scipy + numpy + Qt, un onefile s-ar
+dezarhiva 10-20 de secunde la fiecare pornire. Asa porneste instantaneu.
+
+Configurarea sta **langa** executabil, nu in interiorul lui: `core/config.py`
+detecteaza `sys.frozen` si foloseste folderul executabilului ca radacina, deci
+regulile raman editabile si calibrarea se poate salva.
+
+Uneltele sunt subcomenzi ale aceluiasi exe (nu exista `tools/*.py` de rulat):
+
+```
+MagicQBPM.exe --doctor            verifica instalarea
+MagicQBPM.exe --calibrate exec    calibreaza grila Execute
+MagicQBPM.exe --test-exec         verifica butoanele, fara click
+MagicQBPM.exe --record 120        inregistreaza analiza pentru diagnostic
+MagicQBPM.exe --panel             doar BPM + culori
+```
+
+---
+
+## 1. Instalare (din sursa)
 
 ```bash
 py -3.12 -m pip install -r requirements.txt

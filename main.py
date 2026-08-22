@@ -9,6 +9,9 @@ Punctul de intrare al aplicatiei.
     py -3.12 main.py --simulate 128  fara microfon/boxe: click-track intern
     py -3.12 main.py --no-magicq     analizeaza, dar nu trimite comenzi
     py -3.12 main.py --selftest      verifica lantul DSP si iese
+    py -3.12 main.py --doctor        verifica instalarea pe PC-ul asta
+    py -3.12 main.py --calibrate     calibreaza grila Execute
+    py -3.12 main.py --test-exec     verifica butoanele, fara click
 
 Firele de executie pornite (toate independente):
 
@@ -59,6 +62,17 @@ def parse_args() -> argparse.Namespace:
                    help="forteaza un singur transport (ex: --transport keyboard "
                         "pentru MagicQ PC in Demo Mode)")
     p.add_argument("--selftest", action="store_true", help="test intern al lantului DSP")
+    # Uneltele, ca subcomenzi: intr-un .exe nu exista tools/*.py de rulat
+    p.add_argument("--doctor", action="store_true",
+                   help="verifica instalarea si spune ce mai lipseste")
+    p.add_argument("--calibrate", nargs="*", metavar="FEREASTRA", default=None,
+                   help="calibreaza grilele de butoane (implicit: exec)")
+    p.add_argument("--test-exec", nargs="*", metavar="BUTON", default=None,
+                   help="plimba cursorul peste butoanele Execute, fara click")
+    p.add_argument("--record", nargs="?", const=120.0, type=float, default=None,
+                   metavar="SECUNDE", help="inregistreaza analiza pentru diagnostic")
+    p.add_argument("--check-audio", nargs="?", const=10.0, type=float, default=None,
+                   metavar="SECUNDE", help="verifica captura audio, cu muzica pornita")
     p.add_argument("--debug", action="store_true", help="log detaliat")
     return p.parse_args()
 
@@ -271,6 +285,27 @@ def main() -> int:
 
     if args.list_devices:
         return cmd_list_devices()
+
+    # ---- unelte (functioneaza si din .exe) ----
+    if args.doctor:
+        from tools.doctor import main as doctor_main
+        return doctor_main()
+    if args.calibrate is not None:
+        from tools import calibrate_palettes
+        sys.argv = [sys.argv[0]] + (args.calibrate or ["exec"])
+        return calibrate_palettes.main()
+    if args.test_exec is not None:
+        from tools import calibrate_palettes
+        sys.argv = [sys.argv[0], "--test-exec"] + list(args.test_exec)
+        return calibrate_palettes.main()
+    if args.record is not None:
+        from tools import record_analysis
+        sys.argv = [sys.argv[0], str(args.record)]
+        return record_analysis.main()
+    if args.check_audio is not None:
+        from tools import loopback_check
+        sys.argv = [sys.argv[0], str(args.check_audio)]
+        return loopback_check.main()
 
     if args.selftest:
         from tools.selftest import run_selftest

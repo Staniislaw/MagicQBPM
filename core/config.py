@@ -18,15 +18,30 @@ import copy
 import json
 import logging
 import os
+import sys
 from pathlib import Path
 from typing import Any
 
 log = logging.getLogger(__name__)
 
-# Radacina proiectului (folderul care contine main.py)
-ROOT = Path(__file__).resolve().parent.parent
+
+def _project_root() -> Path:
+    """Folderul in care stau config/ si logs/.
+
+    Ca script: folderul care contine main.py.
+    Ca .exe (PyInstaller): folderul in care sta executabilul - NU folderul
+    temporar de extractie. Asa raman config/rules_*.json si settings.json
+    editabile langa program, nu ascunse intr-un temp care se sterge.
+    """
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parent.parent
+
+
+ROOT = _project_root()
 CONFIG_DIR = ROOT / "config"
 SETTINGS_PATH = CONFIG_DIR / "settings.json"
+SETTINGS_TEMPLATE = CONFIG_DIR / "settings.example.json"
 RULES_PATH = CONFIG_DIR / "rules.json"
 
 
@@ -431,6 +446,20 @@ def load_settings(path: str | Path | None = None) -> Config:
                 user_data = json.load(fh)
         except (OSError, json.JSONDecodeError) as exc:
             log.error("settings.json invalid (%s). Se folosesc valorile implicite.", exc)
+            user_data = {}
+    elif SETTINGS_TEMPLATE.exists():
+        # Prima pornire pe un PC nou: pornim de la sablon, ca sa nu se piarda
+        # maparea butoanelor si pragurile reglate. Calibrarea de mouse NU e
+        # in sablon - aia e specifica fiecarei masini.
+        try:
+            with open(SETTINGS_TEMPLATE, "r", encoding="utf-8") as fh:
+                user_data = json.load(fh)
+            user_data.pop("_README", None)
+            log.info("settings.json lipseste - se creeaza din %s",
+                     SETTINGS_TEMPLATE.name)
+        except (OSError, json.JSONDecodeError) as exc:
+            log.warning("settings.example.json invalid (%s) - se folosesc "
+                        "valorile implicite.", exc)
             user_data = {}
     else:
         user_data = {}

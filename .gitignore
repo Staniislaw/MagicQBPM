@@ -19,6 +19,11 @@ analysis.csv
 # pornire din valorile implicite, iar sablonul e in settings.example.json.
 config/settings.json
 
+# ---- Build PyInstaller ----
+build/
+dist/
+*.manifest
+
 # ---- Modele ML antrenate ----
 *.joblib
 

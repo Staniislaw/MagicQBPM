@@ -25,9 +25,12 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+_SRC = Path(__file__).resolve().parent.parent
+if str(_SRC) not in sys.path:
+    sys.path.insert(0, str(_SRC))
+
+# Radacina reala (langa .exe cand e impachetat, nu in folderul temporar)
+from core.config import ROOT  # noqa: E402
 
 OK, WARN, BAD = "  OK  ", " ATENTIE", " LIPSA"
 _todo: list[str] = []
