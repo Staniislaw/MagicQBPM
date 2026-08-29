@@ -1,580 +1,273 @@
 {
     "_comentariu": [
-        "SHOW PRIN FEREASTRA EXECUTE - varianta finala.",
-        "Rulare:  py -3.12 main.py --rules config/rules_execute.json",
+        "SHOW NOU - Execute Page 1 (E38), grila 10 coloane x 8 randuri.",
+        "Rulare:  py -3.12 main.py     (setul asta e cel implicit)",
         "",
-        "=========== CUM SE REZOLVA SUPRAPUNEREA EFECTELOR ===========",
-        "Butoanele CS sunt TOGGLE. Aplicatia nu poate sti ce era aprins",
-        "inainte sa porneasca, sau ce ai apasat tu manual. Doua mecanisme:",
+        "!!! RECALIBREAZA: grila era 11x7, acum e 10x8 !!!",
+        "   py -3.12 main.py --calibrate exec",
+        "   py -3.12 main.py --test-exec",
         "",
-        "  1. \"members\": lista completa a butoanelor din grup. La fiecare",
-        "     schimbare se trimite 'stinge' pentru TOTI ceilalti, nu doar",
-        "     pentru cel pe care il tine minte aplicatia.",
-        "  2. Transportul CITESTE DE PE ECRAN daca butonul e aprins (MagicQ",
-        "     il deseneaza rosu) si apasa doar daca starea trebuie schimbata.",
-        "     Deci un 'stinge' pe un buton deja stins nu face nimic.",
+        "=========== APARATELE ===========",
+        "   INT  = IntSpot355ZIRC  (G1)   grup 'grup_int'",
+        "   BEAM = FOSBeam150Pro   (G3)   grup 'grup_beam'",
+        "   PAR  = LEDPar64        (G2)   grup 'grup_par'",
         "",
-        "  Grupuri:  miscare = CS13 dinamic, CS14 medleac   (CS12 NU se foloseste)",
-        "            fx      = CS4, CS5, CS6, CS15, CS16",
-        "",
-        "=========== CULORILE ===========",
-        "Ca sa dai culoare trebuie INTAI selectat grupul, apoi paleta:",
-        "   grup_hybrid (G2) -> culoare      pentru capuri",
-        "   grup_par   (G1)  -> culoare      pentru paruri",
-        "Fiecare regula de culoare face exact asta. Perechile sunt alese sa",
-        "se combine (capuri albastru / paruri cyan etc).",
+        "=========== MEREU APRINSE ===========",
+        "CS2 on int, CS3 on fos beam, CS9 on par se aprind la primul sunet si",
+        "raman asa. Se verifica pe ecran ('ensure: on'), deci nu se sting din",
+        "greseala daca erau deja pornite.",
         "",
         "=========== MISCARILE ===========",
-        "Implicit capurile stau pe CS13 DINAMIC.",
-        "CS14 medleac se foloseste doar cand muzica scade: break, outro, liniste,",
-        "sau regula 15 (energie medie sub 45%, ori in scadere sustinuta).",
+        "   INT  : CS14 DINAMIC INT",
+        "   BEAM : CS5 dinamix beam (rapid)  /  CS23 beam lent (calm)",
+        "Cele doua de beam sunt exclusive intre ele: la energie mare 'dinamix',",
+        "cand muzica scade 'beam lent'.",
         "",
-        "=========== BLACKOUT + FLASH PE BEAT ===========",
-        "La drop: blackout 2.2 s, iar in intuneric parurile fac flash pe fiecare",
-        "beat. Intervalul se ia din BPM-ul detectat, prin \"repeat\"/\"interval\".",
+        "=========== EFECTELE (3 grupuri exclusive) ===========",
+        "   fx_int  : CS6 fx1 int | CS7 fx2 stins-aprins | CS24 fx3 int",
+        "   fx_beam : CS8 fx1 beam | CS16 fx incet beam",
+        "   fx_par  : CS10 fx1 par | CS11 fx2 par | CS15 FX2 PAR | CS20 2x2 par",
+        "CS21 '2x2 ca' e combinat cu inturile, deci intra in grupul fx_int.",
         "",
-        "=========== SINCRONIZARE BPM ===========",
-        "   regula 10 -> rafala de tap-uri dupa fiecare tempo NOU",
-        "   regula 16 -> resincronizare la fiecare 32 de masuri (~50 s)",
+        "=========== VITEZA (nou - abia acum se poate) ===========",
+        "Pana acum viteza efectelor nu putea fi controlata deloc. Show-ul asta",
+        "are butoane dedicate:",
+        "   Inc SP2 / Dec SP2  viteza FX-urilor de capuri si beamuri",
+        "   Inc SP3 / Dec SP3  viteza FX-urilor de paruri",
+        "   Tap SP2 / Tap SP3  sincronizare cu BPM-ul detectat",
+        "Regulile apasa Inc/Dec de mai multe ori, cu \"repeat\", ca sa urce sau",
+        "sa coboare viteza in trepte: build-up accelereaza, break incetineste.",
         "",
-        "=========== STROBE ===========",
-        "SEPARARE: detectorul e SENSIBIL (prag 0.64 - vede toate drop-urile si le",
-        "arata in interfata cu scorul lor), iar REGULILE aleg la care reactioneaza:",
-        "   regula 5 -> drop_score > 0.70  (miscare + fx)",
-        "   regula 6 -> drop_score > 0.75  (blackout + flash pe beat + strobe)",
-        "Pe piesa ta masurata: 5 drop-uri peste 0.70, 2 peste 0.75.",
-        "   regula 13 -> energie > 82% si bass sustinut, INDEPENDENT de detector",
-        "   regula 14 -> la CLIMAX",
-        "Daca vrei strobe la fiecare drop: scoate 'if' din regula 6.",
+        "=========== STROBE / BLACK ===========",
+        "   CS17 stribe   strobe general",
+        "   B23 shut med  strobe doar pe capul selectat (mai subtil)",
+        "   CS18 black    inchide tot - folosit scurt, ca taietura la drop",
+        "Toate au \"duration\", deci se sting singure.",
         "",
-        "=========== DE REGLAT ===========",
-        "   strobe mai rar   -> cooldown 25 -> 45, sau adauga if: drop_score > 0.70",
-        "   strobe mai des   -> cooldown 25 -> 10",
-        "   culori mai dese  -> bar % 8  ->  bar % 4",
-        "   miscari mai dese -> exclusive_hold 30 -> 15"
+        "=========== CULORILE ===========",
+        "CS13 '4 COL' face fade automat de culori. E aprins in groove, si se",
+        "STINGE cand vrem culori proprii (la drop), altfel s-ar bate cu ele.",
+        "Culorile manuale se dau prin panoul BPM & Culori."
     ],
+
     "rules": [
         {
-            "name": "1. Muzica porneste -> paruri + miscare lenta",
+            "name": "1. Muzica porneste -> aprinde tot ce sta aprins",
             "on": "SIGNAL",
             "cooldown": 5.0,
             "priority": 1,
-            "description": "Porneste de la o stare curata: stinge orice miscare ramasa aprinsa.",
             "do": [
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "on_off_par",
-                    "ensure": "on"
-                },
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "misc_dinamic",
-                    "exclusive": "miscare",
-                    "members": [
-                        "misc_dinamic",
-                        "misc_medleac"
-                    ]
-                }
+                { "action": "palette", "window": "exec", "name": "on_int",      "ensure": "on" },
+                { "action": "palette", "window": "exec", "name": "on_fos_beam", "ensure": "on" },
+                { "action": "palette", "window": "exec", "name": "on_par",      "ensure": "on" },
+                { "action": "palette", "window": "exec", "name": "shut_open",   "ensure": "on" },
+                { "action": "palette", "window": "exec", "name": "dinamic_int", "ensure": "on" }
             ]
         },
+
         {
-            "name": "2. INTRO -> miscare lenta",
+            "name": "2. INTRO -> calm",
             "on": "INTRO",
             "cooldown": 10.0,
             "do": [
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "misc_dinamic",
-                    "exclusive": "miscare",
-                    "members": [
-                        "misc_dinamic",
-                        "misc_medleac"
-                    ],
-                    "exclusive_hold": 30
-                }
+                { "action": "palette", "window": "exec", "name": "beam_lent",
+                  "exclusive": "misc_beam", "exclusive_hold": 25,
+                  "members": ["dinamic_beam", "beam_lent"] },
+                { "action": "palette", "window": "exec", "name": "fx1_int",
+                  "exclusive": "fx_int", "exclusive_hold": 20,
+                  "members": ["fx1_int", "fx2_int", "fx3_int", "fx_2x2_ca"] }
             ]
         },
         {
-            "name": "3. GROOVE -> lent + fx1",
+            "name": "3. GROOVE -> fx normale + fade automat de culori",
             "on": "GROOVE",
             "cooldown": 10.0,
             "do": [
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "misc_dinamic",
-                    "exclusive": "miscare",
-                    "members": [
-                        "misc_dinamic",
-                        "misc_medleac"
-                    ],
-                    "exclusive_hold": 30
-                },
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "fx1",
-                    "exclusive": "fx",
-                    "exclusive_hold": 20,
-                    "members": [
-                        "fx1",
-                        "fx2",
-                        "fx3",
-                        "fx4",
-                        "fx5"
-                    ]
-                }
+                { "action": "palette", "window": "exec", "name": "dinamic_beam",
+                  "exclusive": "misc_beam", "exclusive_hold": 25,
+                  "members": ["dinamic_beam", "beam_lent"] },
+                { "action": "palette", "window": "exec", "name": "fx1_int",
+                  "exclusive": "fx_int", "exclusive_hold": 20,
+                  "members": ["fx1_int", "fx2_int", "fx3_int", "fx_2x2_ca"] },
+                { "action": "palette", "window": "exec", "name": "fx1_beam",
+                  "exclusive": "fx_beam", "exclusive_hold": 20,
+                  "members": ["fx1_beam", "fx_incet_beam"] },
+                { "action": "palette", "window": "exec", "name": "fx1_par",
+                  "exclusive": "fx_par", "exclusive_hold": 20,
+                  "members": ["fx1_par", "fx2_par", "fx2_par_b", "fx_2x2_par"] },
+                { "action": "palette", "window": "exec", "name": "auto_4col",
+                  "ensure": "on" }
             ]
         },
         {
-            "name": "4. BUILDUP -> dinamic + fx4",
+            "name": "4. BUILDUP -> fx mai agresive + ACCELEREAZA",
             "on": "BUILDUP",
-            "cooldown": 8.0,
+            "cooldown": 12.0,
+            "description": "Inc SP2 de 3 ori si Inc SP3 de 2 ori: efectele se accelereaza odata cu muzica.",
             "do": [
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "misc_dinamic",
-                    "exclusive": "miscare",
-                    "exclusive_hold": 20,
-                    "members": [
-                        "misc_dinamic",
-                        "misc_medleac"
-                    ]
-                },
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "fx4",
-                    "exclusive": "fx",
-                    "exclusive_hold": 20,
-                    "members": [
-                        "fx1",
-                        "fx2",
-                        "fx3",
-                        "fx4",
-                        "fx5"
-                    ]
-                }
+                { "action": "palette", "window": "exec", "name": "fx2_int",
+                  "exclusive": "fx_int", "exclusive_hold": 15,
+                  "members": ["fx1_int", "fx2_int", "fx3_int", "fx_2x2_ca"] },
+                { "action": "palette", "window": "exec", "name": "dinamic_beam",
+                  "exclusive": "misc_beam", "exclusive_hold": 15,
+                  "members": ["dinamic_beam", "beam_lent"] },
+                { "action": "palette", "window": "exec", "name": "inc_sp2",
+                  "repeat": 3, "interval": 0.12 },
+                { "action": "palette", "window": "exec", "name": "inc_sp3",
+                  "repeat": 2, "interval": 0.12 }
             ]
         },
         {
-            "name": "5. DROP -> dinamic + fx5",
+            "name": "5. DROP -> tot pe maxim",
             "on": "DROP",
-            "cooldown": 8.0,
+            "if": "drop_score > 0.70",
+            "cooldown": 10.0,
             "priority": 1,
             "do": [
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "misc_dinamic",
-                    "exclusive": "miscare",
-                    "exclusive_hold": 8,
-                    "members": [
-                        "misc_dinamic",
-                        "misc_medleac"
-                    ]
-                },
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "fx5",
-                    "exclusive": "fx",
-                    "exclusive_hold": 20,
-                    "members": [
-                        "fx1",
-                        "fx2",
-                        "fx3",
-                        "fx4",
-                        "fx5"
-                    ]
-                }
-            ],
-            "if": "drop_score > 0.70",
-            "description": "Miscarea si efectul: doar la drop-urile clare (>0.70)."
+                { "action": "palette", "window": "exec", "name": "fx_2x2_ca",
+                  "exclusive": "fx_int", "exclusive_hold": 8,
+                  "members": ["fx1_int", "fx2_int", "fx3_int", "fx_2x2_ca"] },
+                { "action": "palette", "window": "exec", "name": "fx1_beam",
+                  "exclusive": "fx_beam", "exclusive_hold": 8,
+                  "members": ["fx1_beam", "fx_incet_beam"] },
+                { "action": "palette", "window": "exec", "name": "fx_2x2_par",
+                  "exclusive": "fx_par", "exclusive_hold": 8,
+                  "members": ["fx1_par", "fx2_par", "fx2_par_b", "fx_2x2_par"] }
+            ]
         },
         {
-            "name": "6. DROP -> BLACKOUT + flash pe beat + strobe",
+            "name": "6. DROP PUTERNIC -> black scurt + strobe",
             "on": "DROP",
+            "if": "drop_score > 0.75",
             "cooldown": 20.0,
             "priority": 0,
-            "description": "Blackout 2.2 s, iar in intuneric parurile dau flash pe fiecare beat (6 beat-uri, interval luat din BPM-ul detectat). Peste ele, strobe 1.6 s.",
+            "description": "CS18 black taie 0.3 s, apoi CS17 stribe 1.6 s. Ambele se sting singure.",
             "do": [
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "blackout",
-                    "duration": 2.2
-                },
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "flash_par",
-                    "duration": 0.12,
-                    "repeat": 6,
-                    "interval": "beat"
-                },
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "strobe",
-                    "duration": 1.6
-                },
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "grup_hybrid"
-                },
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "random": true,
-                    "cycle": [
-                        {
-                            "name": "rosu"
-                        },
-                        {
-                            "name": "magenta"
-                        },
-                        {
-                            "name": "albastru"
-                        }
-                    ]
-                }
-            ],
-            "if": "drop_score > 0.75"
+                { "action": "palette", "window": "exec", "name": "black",  "duration": 0.30 },
+                { "action": "palette", "window": "exec", "name": "strobe", "duration": 1.60 },
+                { "action": "palette", "window": "exec", "name": "auto_4col", "ensure": "off" }
+            ]
         },
         {
-            "name": "7. CLIMAX -> dinamic + fx5",
+            "name": "7. CLIMAX -> shut med pe capuri",
             "on": "CLIMAX",
-            "cooldown": 15.0,
+            "cooldown": 25.0,
+            "description": "B23 shut med: strobe doar pe capuri, mai subtil decat strobe-ul general.",
             "do": [
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "misc_dinamic",
-                    "exclusive": "miscare",
-                    "exclusive_hold": 12,
-                    "members": [
-                        "misc_dinamic",
-                        "misc_medleac"
-                    ]
-                },
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "fx5",
-                    "exclusive": "fx",
-                    "exclusive_hold": 20,
-                    "members": [
-                        "fx1",
-                        "fx2",
-                        "fx3",
-                        "fx4",
-                        "fx5"
-                    ]
-                }
+                { "action": "palette", "window": "exec", "name": "shut_med", "duration": 2.5 }
             ]
         },
         {
-            "name": "8. BREAK -> lent, calm, alb",
+            "name": "8. BREAK -> calm + INCETINESTE",
             "on": "BREAK",
-            "cooldown": 8.0,
+            "cooldown": 10.0,
             "do": [
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "misc_medleac",
-                    "exclusive": "miscare",
-                    "members": [
-                        "misc_dinamic",
-                        "misc_medleac"
-                    ],
-                    "exclusive_hold": 20
-                },
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "fx1",
-                    "exclusive": "fx",
-                    "exclusive_hold": 20,
-                    "members": [
-                        "fx1",
-                        "fx2",
-                        "fx3",
-                        "fx4",
-                        "fx5"
-                    ]
-                },
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "grup_hybrid"
-                },
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "alb"
-                }
+                { "action": "palette", "window": "exec", "name": "beam_lent",
+                  "exclusive": "misc_beam", "exclusive_hold": 20,
+                  "members": ["dinamic_beam", "beam_lent"] },
+                { "action": "palette", "window": "exec", "name": "fx_incet_beam",
+                  "exclusive": "fx_beam", "exclusive_hold": 15,
+                  "members": ["fx1_beam", "fx_incet_beam"] },
+                { "action": "palette", "window": "exec", "name": "dec_sp2",
+                  "repeat": 3, "interval": 0.12 },
+                { "action": "palette", "window": "exec", "name": "dec_sp3",
+                  "repeat": 2, "interval": 0.12 },
+                { "action": "palette", "window": "exec", "name": "shut_open", "ensure": "on" },
+                { "action": "palette", "window": "exec", "name": "auto_4col", "ensure": "on" }
             ]
         },
         {
-            "name": "9. OUTRO -> lent + alb",
+            "name": "9. OUTRO -> revenire linistita",
             "on": "OUTRO",
-            "cooldown": 15.0,
+            "cooldown": 20.0,
             "do": [
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "misc_medleac",
-                    "exclusive": "miscare",
-                    "members": [
-                        "misc_dinamic",
-                        "misc_medleac"
-                    ],
-                    "exclusive_hold": 20
-                },
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "grup_hybrid"
-                },
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "alb"
-                }
+                { "action": "palette", "window": "exec", "name": "beam_lent",
+                  "exclusive": "misc_beam", "exclusive_hold": 20,
+                  "members": ["dinamic_beam", "beam_lent"] },
+                { "action": "palette", "window": "exec", "name": "fx1_int",
+                  "exclusive": "fx_int", "exclusive_hold": 15,
+                  "members": ["fx1_int", "fx2_int", "fx3_int", "fx_2x2_ca"] },
+                { "action": "palette", "window": "exec", "name": "dec_sp2",
+                  "repeat": 4, "interval": 0.12 }
             ]
         },
+
         {
-            "name": "10. TAP TEMPO - rafala la tempo nou",
+            "name": "10. TAP SP2 - rafala la tempo nou",
             "on": "BEAT",
             "if": "bpm_age < 3.5 and bpm_conf > 0.45 and not is_silence",
             "cooldown": 0.15,
             "priority": 0,
-            "description": "Sincronizeaza Speed Master-ul, deci FX-urile CS4-CS16 merg in tempo.",
+            "description": "Sincronizeaza viteza FX-urilor de capuri cu muzica.",
             "do": [
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "tap_tempo"
-                }
+                { "action": "palette", "window": "exec", "name": "tap_sp2" }
             ]
         },
         {
-            "name": "11. PERECHE DE CULORI la fiecare 8 masuri",
-            "on": "DOWNBEAT",
-            "if": "bar % 8 == 0 and not is_break and not is_silence",
-            "cooldown": 12.0,
-            "description": "Capuri o culoare, paruri alta care se combina. Grupul se selecteaza inainte de fiecare paleta.",
-            "do": [
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "grup_hybrid"
-                },
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "cycle": [
-                        {
-                            "name": "albastru"
-                        },
-                        {
-                            "name": "rosu"
-                        },
-                        {
-                            "name": "magenta"
-                        },
-                        {
-                            "name": "verde"
-                        },
-                        {
-                            "name": "amber"
-                        },
-                        {
-                            "name": "alb"
-                        },
-                        {
-                            "name": "uv"
-                        },
-                        {
-                            "name": "cyan"
-                        }
-                    ]
-                },
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "grup_par"
-                },
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "cycle": [
-                        {
-                            "name": "cyan"
-                        },
-                        {
-                            "name": "amber"
-                        },
-                        {
-                            "name": "albastru"
-                        },
-                        {
-                            "name": "cyan"
-                        },
-                        {
-                            "name": "rosu"
-                        },
-                        {
-                            "name": "albastru"
-                        },
-                        {
-                            "name": "magenta"
-                        },
-                        {
-                            "name": "albastru"
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "12. Liniste -> reset complet",
-            "on": "SILENCE",
-            "cooldown": 10.0,
-            "priority": 0,
-            "description": "Stinge toate FX-urile si lasa doar miscarea lenta.",
-            "do": [
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "misc_medleac",
-                    "exclusive": "miscare",
-                    "members": [
-                        "misc_dinamic",
-                        "misc_medleac"
-                    ]
-                },
-                {
-                    "action": "exclusive_off",
-                    "group": "fx"
-                },
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "grup_hybrid"
-                },
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "alb"
-                }
-            ]
-        },
-        {
-            "name": "20. Kick in drop -> flash paruri (optional)",
-            "on": "BEAT",
-            "if": "bass > 78 and is_drop",
-            "cooldown": 0.6,
-            "enabled": false,
-            "do": [
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "flash_par",
-                    "duration": 0.25
-                }
-            ]
-        },
-        {
-            "name": "13. Energie mare brusca -> strobe scurt",
-            "when": "energy > 82 and bass_avg > 62 and not is_break",
-            "mode": "edge",
-            "hold": 4.0,
-            "cooldown": 18.0,
-            "description": "Al doilea declansator de strobe, independent de detectorul de DROP. Prinde momentele tari pe care detectorul de structura le rateaza (refrene, breakdown-uri scurte).",
-            "do": [
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "strobe",
-                    "duration": 1.0
-                },
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "flash_par",
-                    "duration": 0.4
-                }
-            ]
-        },
-        {
-            "name": "14. CLIMAX -> strobe",
-            "on": "CLIMAX",
-            "cooldown": 30.0,
-            "do": [
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "strobe",
-                    "duration": 1.2
-                }
-            ]
-        },
-        {
-            "name": "15. Muzica scade lent -> medleac",
-            "when": "energy_mid < 45 or (energy_slope < -0.02 and energy_mid < 62)",
-            "mode": "edge",
-            "hold": 6.0,
-            "cooldown": 20.0,
-            "description": "CS14 medleac se foloseste DOAR cand muzica chiar incetineste/scade. In rest capurile stau pe CS13 dinamic.",
-            "do": [
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "misc_medleac",
-                    "exclusive": "miscare",
-                    "members": [
-                        "misc_dinamic",
-                        "misc_medleac"
-                    ],
-                    "exclusive_hold": 15
-                }
-            ],
-            "undo": [
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "misc_dinamic",
-                    "exclusive": "miscare",
-                    "members": [
-                        "misc_dinamic",
-                        "misc_medleac"
-                    ],
-                    "exclusive_hold": 15
-                }
-            ]
-        },
-        {
-            "name": "16. Resincronizare BPM periodica",
+            "name": "11. TAP SP3 - viteza parurilor, la fiecare 32 de masuri",
             "on": "DOWNBEAT",
             "if": "bar % 32 == 0 and bpm_conf > 0.5 and not is_silence",
             "cooldown": 45.0,
             "priority": 0,
-            "description": "La fiecare 32 de masuri (~50 s) trimite 6 tap-uri pe beat-uri succesive, ca Speed Master-ul sa nu ramana in urma. Intervalul vine din BPM-ul curent.",
             "do": [
-                {
-                    "action": "palette",
-                    "window": "exec",
-                    "name": "tap_tempo",
-                    "repeat": 6,
-                    "interval": "beat"
-                }
+                { "action": "palette", "window": "exec", "name": "tap_sp3",
+                  "repeat": 6, "interval": "beat" }
+            ]
+        },
+
+        {
+            "name": "12. Energie mare sustinuta -> strobe scurt",
+            "when": "energy > 82 and bass_avg > 62 and not is_break",
+            "mode": "edge",
+            "hold": 4.0,
+            "cooldown": 20.0,
+            "description": "Al doilea declansator de strobe, independent de detectorul de drop.",
+            "do": [
+                { "action": "palette", "window": "exec", "name": "strobe", "duration": 1.0 }
+            ]
+        },
+        {
+            "name": "13. Muzica scade -> beam lent",
+            "when": "energy_mid < 45 or (energy_slope < -0.02 and energy_mid < 62)",
+            "mode": "edge",
+            "hold": 6.0,
+            "cooldown": 20.0,
+            "do": [
+                { "action": "palette", "window": "exec", "name": "beam_lent",
+                  "exclusive": "misc_beam", "exclusive_hold": 15,
+                  "members": ["dinamic_beam", "beam_lent"] }
+            ],
+            "undo": [
+                { "action": "palette", "window": "exec", "name": "dinamic_beam",
+                  "exclusive": "misc_beam", "exclusive_hold": 15,
+                  "members": ["dinamic_beam", "beam_lent"] }
+            ]
+        },
+
+        {
+            "name": "14. Liniste -> opreste efectele, lasa lumina",
+            "on": "SILENCE",
+            "cooldown": 15.0,
+            "priority": 0,
+            "description": "Nu stinge on_int / on_par: la liniste vrei sa ramana lumina in sala.",
+            "do": [
+                { "action": "exclusive_off", "group": "fx_par" },
+                { "action": "palette", "window": "exec", "name": "beam_lent",
+                  "exclusive": "misc_beam",
+                  "members": ["dinamic_beam", "beam_lent"] },
+                { "action": "palette", "window": "exec", "name": "shut_open", "ensure": "on" },
+                { "action": "palette", "window": "exec", "name": "auto_4col", "ensure": "on" }
+            ]
+        },
+
+        {
+            "name": "20. Kick in drop -> shut med scurt (optional)",
+            "on": "BEAT",
+            "if": "bass > 78 and is_drop",
+            "cooldown": 0.8,
+            "enabled": false,
+            "do": [
+                { "action": "palette", "window": "exec", "name": "shut_med", "duration": 0.20 }
             ]
         }
     ]

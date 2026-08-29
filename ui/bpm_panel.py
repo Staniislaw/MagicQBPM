@@ -297,10 +297,12 @@ class BpmColorPanel(QMainWindow):
             self._status("mouse-ul nu e activ - ruleaza calibrate_palettes.py exec", RED)
             return
         known = getattr(mouse, "exec_buttons", {})
-        # grup -> culoare, pentru fiecare din cele trei tinte
-        steps = [("grup_hybrid", scheme["cap1"]),
-                 ("grup_beamq60", scheme["cap2"]),
-                 ("grup_par", scheme["par"])]
+        # Numele butoanelor de grup vin din configurare, nu din cod: se
+        # schimba de la un show la altul (G1/G2/G3 pot fi orice).
+        groups = self.cfg.get("magicq.mouse.group_buttons", {}) or {}
+        steps = [(groups.get("cap1", "grup_int"), scheme["cap1"]),
+                 (groups.get("cap2", "grup_beam"), scheme["cap2"]),
+                 (groups.get("par", "grup_par"), scheme["par"])]
         missing = [n for pair in steps for n in pair if n not in known]
         if missing:
             self._status(f"lipsesc din exec_buttons: {', '.join(sorted(set(missing)))}", RED)
