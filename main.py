@@ -14,8 +14,9 @@ Punctul de intrare al aplicatiei.
     py -3.12 main.py --test-exec     verifica butoanele, fara click
 
 Taste globale (merg din orice fereastra, si cand MagicQ e in prim-plan):
-    P apasat de doua ori   opreste aplicatia
+    P apasat de doua ori   comuta MANUAL / AUTO (nu inchide aplicatia)
     CTRL+ALT+P             PANIC: elibereaza luminile, aplicatia ramane
+    CTRL+ALT+Q             opreste complet aplicatia
 
 Firele de executie pornite (toate independente):
 
@@ -184,18 +185,19 @@ def build_app(cfg, args):
     return state, bus, engine, router, rule_engine
 
 
-def install_hotkeys(cfg, router, on_stop=None) -> None:
+def install_hotkeys(cfg, router, on_stop=None, on_toggle_manual=None) -> None:
     """Taste globale, care merg din ORICE fereastra.
 
     Necesare pentru ca aplicatia fura permanent focusul catre MagicQ:
     mouse-ul sare, deci inchiderea cu click pe X e greu de nimerit.
 
-      PANIC : elibereaza luminile, aplicatia ramane pornita
-      STOP  : opreste complet aplicatia
+      MANUAL : opreste/reia trimiterea catre MagicQ (analiza merge)
+      PANIC  : elibereaza luminile, aplicatia ramane pornita
+      STOP   : opreste complet aplicatia
 
-    STOP e, implicit, "p" apasat de DOUA ori in 1.5 s. O singura apasare
-    nu face nimic: altfel aplicatia s-ar inchide de fiecare data cand
-    scrii litera p undeva - de exemplu cand denumesti un cue in MagicQ.
+    MANUAL este, implicit, "p" apasat de DOUA ori in 1.5 s. O singura
+    apasare nu face nimic: altfel modul s-ar schimba de fiecare data cand
+    scrii litera p undeva - iar in MagicQ "p" este chiar GO pe playback 10.
     """
     try:
         import keyboard as kb  # type: ignore
@@ -206,9 +208,9 @@ def install_hotkeys(cfg, router, on_stop=None) -> None:
 
     hk = cfg.get("magicq.hotkeys", {}) or {}
     panic_key = str(hk.get("panic", "ctrl+alt+p"))
-    stop_key = str(hk.get("stop", "p"))
-    double = bool(hk.get("stop_double_press", True))
-    window = float(hk.get("stop_window_s", 1.5))
+    manual_key = str(hk.get("manual", "p"))
+    stop_key = str(hk.get("stop", "ctrl+alt+q"))
+    window = float(hk.get("double_window_s", 1.5))
 
     try:
         kb.add_hotkey(panic_key, router.panic)
@@ -216,29 +218,35 @@ def install_hotkeys(cfg, router, on_stop=None) -> None:
     except Exception as exc:  # noqa: BLE001
         log.warning("Nu am putut inregistra tasta de PANIC '%s': %s", panic_key, exc)
 
-    if not stop_key or on_stop is None:
-        return
+    def register(key: str, action, double: bool, label: str) -> None:
+        """Inregistreaza o tasta, optional cu conditie de dubla apasare."""
+        if not key or action is None:
+            return
+        state = {"last": 0.0}
 
-    state = {"last": 0.0}
+        def pressed() -> None:
+            if double:
+                now = time.monotonic()
+                if now - state["last"] > window:
+                    state["last"] = now
+                    log.info("Apasa %s inca o data in %.1f s: %s",
+                             key.upper(), window, label)
+                    return
+                state["last"] = 0.0
+            action()
 
-    def stop_pressed() -> None:
-        now = time.monotonic()
-        if double:
-            if now - state["last"] > window:
-                state["last"] = now
-                log.info("Apasa %s inca o data in %.1f s ca sa opresti aplicatia.",
-                         stop_key.upper(), window)
-                return
-            state["last"] = 0.0
-        log.warning("Oprire ceruta de la tastatura (%s).", stop_key.upper())
-        on_stop()
+        try:
+            kb.add_hotkey(key, pressed, suppress=False)
+            how = f"{key.upper()} x2 (in {window:.1f} s)" if double else key.upper()
+            log.info("Tasta globala: %-18s %s", how, label)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("Nu am putut inregistra tasta '%s': %s", key, exc)
 
-    try:
-        kb.add_hotkey(stop_key, stop_pressed, suppress=False)
-        how = f"{stop_key.upper()} x2 (in {window:.1f} s)" if double else stop_key.upper()
-        log.info("Tasta globala STOP: %s - opreste aplicatia", how)
-    except Exception as exc:  # noqa: BLE001
-        log.warning("Nu am putut inregistra tasta de STOP '%s': %s", stop_key, exc)
+    register(manual_key, on_toggle_manual,
+             bool(hk.get("manual_double_press", True)),
+             "comuta MANUAL / AUTO (nu inchide aplicatia)")
+    register(stop_key, on_stop, bool(hk.get("stop_double_press", False)),
+             "OPRESTE aplicatia")
 
 
 # ======================================================================
@@ -251,6 +259,7 @@ class _HotkeyBridge(QObject):
     """
 
     stop_requested = pyqtSignal()
+    toggle_manual_requested = pyqtSignal()
 
 
 def run_gui(cfg, args) -> int:
@@ -275,7 +284,9 @@ def run_gui(cfg, args) -> int:
         app.quit()
 
     bridge.stop_requested.connect(shutdown)
-    install_hotkeys(cfg, router, on_stop=bridge.stop_requested.emit)
+    install_hotkeys(cfg, router,
+                    on_stop=bridge.stop_requested.emit,
+                    on_toggle_manual=bridge.toggle_manual_requested.emit)
 
     if args.panel:
         from ui.bpm_panel import BpmColorPanel
@@ -283,6 +294,9 @@ def run_gui(cfg, args) -> int:
         log.info("Panou BPM & Culori pornit (fara interfata mare).")
     else:
         window = Dashboard(cfg, state, bus, engine, router, rule_engine)
+        # tasta de MANUAL apasa exact acelasi buton ca mouse-ul, deci se
+        # actualizeaza si textul si culoarea butonului din interfata
+        bridge.toggle_manual_requested.connect(window._toggle_mode)
         log.info("Interfata pornita.")
     window.show()
     code = app.exec()
@@ -298,7 +312,17 @@ def run_gui(cfg, args) -> int:
 def run_headless(cfg, args) -> int:
     state, bus, engine, router, rule_engine = build_app(cfg, args)
     stop_flag = {"stop": False}
-    install_hotkeys(cfg, router, on_stop=lambda: stop_flag.__setitem__("stop", True))
+
+    def toggle_manual() -> None:
+        auto = not rule_engine.auto_mode
+        rule_engine.set_auto_mode(auto)
+        router.set_manual_mode(not auto)
+        mod = "AUTOMAT" if auto else "MANUAL (nu se trimite nimic)"
+        print(f"\n  >>> MOD {mod}\n", flush=True)
+
+    install_hotkeys(cfg, router,
+                    on_stop=lambda: stop_flag.__setitem__("stop", True),
+                    on_toggle_manual=toggle_manual)
     sub = bus.subscribe([EventType.SECTION_CHANGE, EventType.RULE_FIRED,
                          EventType.ACTION_SENT, EventType.ACTION_FAILED,
                          EventType.AUDIO_ERROR])

@@ -345,15 +345,21 @@ DEFAULTS: dict[str, Any] = {
 
         # ---- taste globale (merg din orice fereastra) ----
         "hotkeys": {
-            # PANIC: elibereaza luminile, dar aplicatia ramane pornita
+            # MANUAL/AUTO: opreste sau reia trimiterea catre MagicQ, fara sa
+            # inchida aplicatia. Asta e tasta pe care o folosesti in show:
+            # analiza merge mai departe, doar comenzile nu mai pleaca.
+            # "p" apasat de DOUA ori in 1.5 s - o singura apasare nu face
+            # nimic, altfel modul s-ar schimba de fiecare data cand scrii
+            # litera p undeva (in MagicQ, "p" e chiar GO pe playback 10).
+            "manual": "p",
+            "manual_double_press": True,
+            "double_window_s": 1.5,
+            # PANIC: elibereaza luminile, aplicatia ramane pornita
             "panic": "ctrl+alt+p",
-            # STOP: opreste complet aplicatia. Implicit "p" apasat de DOUA
-            # ori rapid - o singura apasare nu face nimic, altfel aplicatia
-            # ar muri de fiecare data cand scrii litera p undeva (inclusiv
-            # cand denumesti un cue in MagicQ).
-            "stop": "p",
-            "stop_double_press": True,
-            "stop_window_s": 1.5,
+            # OPRIRE COMPLETA a aplicatiei (combinatie, ca sa nu se apese din
+            # greseala). Pune "" ca s-o dezactivezi.
+            "stop": "ctrl+alt+q",
+            "stop_double_press": False,
         },
         # butonul de tap tempo din fereastra Execute, folosit de butonul
         # "BPM -> MagicQ" din interfata si de regulile de resincronizare
