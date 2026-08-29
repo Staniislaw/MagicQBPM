@@ -343,6 +343,18 @@ DEFAULTS: dict[str, Any] = {
             },
         },
 
+        # ---- taste globale (merg din orice fereastra) ----
+        "hotkeys": {
+            # PANIC: elibereaza luminile, dar aplicatia ramane pornita
+            "panic": "ctrl+alt+p",
+            # STOP: opreste complet aplicatia. Implicit "p" apasat de DOUA
+            # ori rapid - o singura apasare nu face nimic, altfel aplicatia
+            # ar muri de fiecare data cand scrii litera p undeva (inclusiv
+            # cand denumesti un cue in MagicQ).
+            "stop": "p",
+            "stop_double_press": True,
+            "stop_window_s": 1.5,
+        },
         # butonul de tap tempo din fereastra Execute, folosit de butonul
         # "BPM -> MagicQ" din interfata si de regulile de resincronizare
         "tap_button": "tap_tempo",

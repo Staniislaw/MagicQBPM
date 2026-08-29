@@ -13,6 +13,10 @@ Punctul de intrare al aplicatiei.
     py -3.12 main.py --calibrate     calibreaza grila Execute
     py -3.12 main.py --test-exec     verifica butoanele, fara click
 
+Taste globale (merg din orice fereastra, si cand MagicQ e in prim-plan):
+    P apasat de doua ori   opreste aplicatia
+    CTRL+ALT+P             PANIC: elibereaza luminile, aplicatia ramane
+
 Firele de executie pornite (toate independente):
 
     [PortAudio callback]  captura -> ring buffer          (prioritate maxima)
@@ -35,6 +39,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+
+try:
+    from PyQt6.QtCore import QObject, pyqtSignal    # noqa: E402
+except Exception:  # pragma: no cover - modul headless fara Qt
+    QObject, pyqtSignal = object, None              # type: ignore[misc,assignment]
 
 from core.bus import EventBus, EventType          # noqa: E402
 from core.config import ROOT as ROOT_APP           # noqa: E402
@@ -175,17 +184,75 @@ def build_app(cfg, args):
     return state, bus, engine, router, rule_engine
 
 
-def install_panic_hotkey(router) -> None:
-    """CTRL+ALT+P = PANIC global (necesita pachetul `keyboard`)."""
+def install_hotkeys(cfg, router, on_stop=None) -> None:
+    """Taste globale, care merg din ORICE fereastra.
+
+    Necesare pentru ca aplicatia fura permanent focusul catre MagicQ:
+    mouse-ul sare, deci inchiderea cu click pe X e greu de nimerit.
+
+      PANIC : elibereaza luminile, aplicatia ramane pornita
+      STOP  : opreste complet aplicatia
+
+    STOP e, implicit, "p" apasat de DOUA ori in 1.5 s. O singura apasare
+    nu face nimic: altfel aplicatia s-ar inchide de fiecare data cand
+    scrii litera p undeva - de exemplu cand denumesti un cue in MagicQ.
+    """
     try:
         import keyboard as kb  # type: ignore
-        kb.add_hotkey("ctrl+alt+p", router.panic)
-        log.info("Hotkey global de urgenta: CTRL+ALT+P (PANIC)")
     except Exception as exc:  # noqa: BLE001
-        log.debug("Hotkey global indisponibil: %s", exc)
+        log.warning("Tastele globale nu sunt disponibile (%s). "
+                    "Instaleaza: py -3.12 -m pip install keyboard", exc)
+        return
+
+    hk = cfg.get("magicq.hotkeys", {}) or {}
+    panic_key = str(hk.get("panic", "ctrl+alt+p"))
+    stop_key = str(hk.get("stop", "p"))
+    double = bool(hk.get("stop_double_press", True))
+    window = float(hk.get("stop_window_s", 1.5))
+
+    try:
+        kb.add_hotkey(panic_key, router.panic)
+        log.info("Tasta globala PANIC: %s (elibereaza luminile)", panic_key.upper())
+    except Exception as exc:  # noqa: BLE001
+        log.warning("Nu am putut inregistra tasta de PANIC '%s': %s", panic_key, exc)
+
+    if not stop_key or on_stop is None:
+        return
+
+    state = {"last": 0.0}
+
+    def stop_pressed() -> None:
+        now = time.monotonic()
+        if double:
+            if now - state["last"] > window:
+                state["last"] = now
+                log.info("Apasa %s inca o data in %.1f s ca sa opresti aplicatia.",
+                         stop_key.upper(), window)
+                return
+            state["last"] = 0.0
+        log.warning("Oprire ceruta de la tastatura (%s).", stop_key.upper())
+        on_stop()
+
+    try:
+        kb.add_hotkey(stop_key, stop_pressed, suppress=False)
+        how = f"{stop_key.upper()} x2 (in {window:.1f} s)" if double else stop_key.upper()
+        log.info("Tasta globala STOP: %s - opreste aplicatia", how)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("Nu am putut inregistra tasta de STOP '%s': %s", stop_key, exc)
 
 
 # ======================================================================
+class _HotkeyBridge(QObject):
+    """Puntea dintre firul tastelor globale si firul Qt.
+
+    Tastele globale sunt prinse pe alt fir. Nu se poate inchide fereastra
+    direct de acolo - Qt trebuie atins doar din firul lui. Un semnal Qt
+    trece cererea in coada firului principal, in siguranta.
+    """
+
+    stop_requested = pyqtSignal()
+
+
 def run_gui(cfg, args) -> int:
     from PyQt6.QtWidgets import QApplication
     from ui.dashboard import Dashboard
@@ -194,7 +261,21 @@ def run_gui(cfg, args) -> int:
     app.setApplicationName("MagicQ Audio Reactive Controller")
 
     state, bus, engine, router, rule_engine = build_app(cfg, args)
-    install_panic_hotkey(router)
+
+    bridge = _HotkeyBridge()
+
+    def shutdown() -> None:
+        log.warning("Se opreste aplicatia (tasta globala).")
+        try:
+            router.panic()              # nu lasam lumini blocate aprinse
+        except Exception:  # noqa: BLE001
+            log.debug("PANIC la oprire a esuat", exc_info=True)
+        for widget in app.topLevelWidgets():
+            widget.close()
+        app.quit()
+
+    bridge.stop_requested.connect(shutdown)
+    install_hotkeys(cfg, router, on_stop=bridge.stop_requested.emit)
 
     if args.panel:
         from ui.bpm_panel import BpmColorPanel
@@ -216,7 +297,8 @@ def run_gui(cfg, args) -> int:
 # ======================================================================
 def run_headless(cfg, args) -> int:
     state, bus, engine, router, rule_engine = build_app(cfg, args)
-    install_panic_hotkey(router)
+    stop_flag = {"stop": False}
+    install_hotkeys(cfg, router, on_stop=lambda: stop_flag.__setitem__("stop", True))
     sub = bus.subscribe([EventType.SECTION_CHANGE, EventType.RULE_FIRED,
                          EventType.ACTION_SENT, EventType.ACTION_FAILED,
                          EventType.AUDIO_ERROR])
@@ -231,7 +313,7 @@ def run_headless(cfg, args) -> int:
 
     last_print = 0.0
     try:
-        while not stopping:
+        while not stopping and not stop_flag["stop"]:
             for event in sub.drain(64):
                 print(f"  {event}")
             now = time.monotonic()
