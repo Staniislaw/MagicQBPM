@@ -494,27 +494,10 @@ class Dashboard(QMainWindow):
             self._log(f"BPM -> MagicQ: tempo nesigur ({bpm:.1f}, incredere "
                       f"{snapshot.bpm_confidence * 100:.0f}%). Trimit oricum.", YELLOW)
 
-        button = str(self.cfg.get("magicq.tap_button", "tap_tempo"))
-        taps = int(self.cfg.get("magicq.tap_count", 8))
-        mouse = self.router.transports.get("mouse")
-        if mouse is None or not mouse.status.connected:
-            self._log("BPM -> MagicQ: transportul de mouse nu e activ. "
-                      "Ruleaza tools/calibrate_palettes.py exec", RED)
-            return
-        if button not in getattr(mouse, "exec_buttons", {}):
-            self._log(f"BPM -> MagicQ: butonul '{button}' nu e definit in "
-                      "magicq.mouse.exec_buttons", RED)
-            return
-
-        period = 60.0 / bpm
-        for i in range(taps):
-            params = {"window": "exec", "name": button, "force": True}
-            if i:
-                params["delay"] = round(i * period, 4)
-            self.router.send(Action(ActionType.PALETTE, params,
-                                    source="buton BPM -> MagicQ", priority=0))
-        self._log(f"BPM -> MagicQ: {taps} tap-uri la {bpm:.1f} BPM "
-                  f"(interval {period:.3f} s, durata {taps * period:.1f} s)", ACCENT)
+        result = self.router.tap_burst(bpm, self.router.tap_buttons(),
+                                       int(self.cfg.get("magicq.tap_count", 8)))
+        ok = "lipsesc" not in result and "niciun" not in result
+        self._log(f"BPM -> MagicQ: {result}", ACCENT if ok else RED)
 
     def _panic(self) -> None:
         self.router.panic()

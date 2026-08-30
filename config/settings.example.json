@@ -459,7 +459,10 @@
         },
         "rate_limit_per_s": 40,
         "status_idle_s": 5.0,
-        "tap_button": "tap_sp2"
+        "tap_buttons": [
+            "tap_sp2",
+            "tap_sp3"
+        ]
     },
     "rules": {
         "enabled": true,

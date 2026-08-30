@@ -363,7 +363,10 @@ DEFAULTS: dict[str, Any] = {
         },
         # butonul de tap tempo din fereastra Execute, folosit de butonul
         # "BPM -> MagicQ" din interfata si de regulile de resincronizare
-        "tap_button": "tap_tempo",
+        # Butoanele de tap tempo din fereastra Execute. Show-ul are doua
+        # Speed Master-e: SP2 pentru capuri/beamuri, SP3 pentru paruri.
+        # Butonul "BPM -> MagicQ" le sincronizeaza pe amandoua deodata.
+        "tap_buttons": ["tap_sp2", "tap_sp3"],
         "tap_count": 8,
         # limita globala de comenzi/secunda (protectie anti-flood MagicQ)
         "rate_limit_per_s": 40,

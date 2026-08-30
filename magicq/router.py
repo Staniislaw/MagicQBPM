@@ -376,6 +376,48 @@ class MagicQRouter(threading.Thread):
         if isinstance(midi, MIDITransport):
             midi.all_notes_off()
 
+    def tap_burst(self, bpm: float, buttons: list[str], taps: int = 8) -> str:
+        """Sincronizeaza unul sau mai multe Speed Master-e cu BPM-ul dat.
+
+        Trimite `taps` apasari pe fiecare buton, la intervalul exact al
+        beat-ului. Cand sunt mai multe butoane (Tap SP2 si Tap SP3), la
+        fiecare beat se apasa pe rand toate - fiecare Speed Master isi
+        masoara propriile intervale, iar decalajul de ~50 ms dintre ele nu
+        conteaza, doar distanta dintre doua apasari pe ACELASI buton.
+
+        Returneaza un text pentru jurnal / bara de status.
+        """
+        if bpm <= 20:
+            return "tempo nedetectat"
+        names = [b for b in buttons if b]
+        if not names:
+            return "niciun buton de tap configurat"
+
+        mouse = self.transports.get("mouse")
+        known = getattr(mouse, "exec_buttons", {}) if mouse else {}
+        missing = [n for n in names if n not in known]
+        if missing:
+            return f"lipsesc din exec_buttons: {', '.join(missing)}"
+
+        period = 60.0 / bpm
+        for i in range(taps):
+            for name in names:
+                params = {"window": "exec", "name": name, "force": True}
+                if i:
+                    params["delay"] = round(i * period, 4)
+                self.send(Action(ActionType.PALETTE, params,
+                                 source="sincronizare BPM", priority=0))
+        return (f"{taps} tap-uri x {len(names)} ({', '.join(names)}) "
+                f"la {bpm:.1f} BPM, interval {period:.3f} s")
+
+    def tap_buttons(self) -> list[str]:
+        """Butoanele de tap din configurare (lista noua sau cel vechi)."""
+        names = self.cfg.get("magicq.tap_buttons")
+        if isinstance(names, list) and names:
+            return [str(n) for n in names]
+        single = self.cfg.get("magicq.tap_button")
+        return [str(single)] if single else []
+
     def set_manual_mode(self, manual: bool) -> None:
         """In modul manual actiunile sunt doar afisate, nu trimise."""
         self.dry_run = manual

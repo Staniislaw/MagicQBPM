@@ -320,22 +320,18 @@ class BpmColorPanel(QMainWindow):
                      f"cap2 {scheme['cap2']}  |  par {scheme['par']}", ACCENT)
 
     def _sync_bpm(self) -> None:
-        from magicq.actions import Action, ActionType
+        """Sincronizeaza TOATE Speed Master-ele configurate, deodata."""
         snapshot = self.state.snapshot
         if snapshot.bpm <= 20:
             self._status("nu am inca un tempo detectat", RED)
             return
-        button = str(self.cfg.get("magicq.tap_button", "tap_tempo"))
-        taps = int(self.cfg.get("magicq.tap_count", 8))
-        period = 60.0 / snapshot.bpm
-        for i in range(taps):
-            params = {"window": "exec", "name": button, "force": True}
-            if i:
-                params["delay"] = round(i * period, 4)
-            self.router.send(Action(ActionType.PALETTE, params,
-                                    source="panou BPM", priority=0))
-        self._status(f"{taps} tap-uri la {snapshot.bpm:.1f} BPM "
-                     f"(interval {period:.3f} s)", ACCENT)
+        if snapshot.bpm_confidence < 0.35:
+            self._status(f"tempo nesigur ({snapshot.bpm_confidence * 100:.0f}%) "
+                         "- mai asteapta cateva secunde", YELLOW)
+        result = self.router.tap_burst(snapshot.bpm, self.router.tap_buttons(),
+                                       int(self.cfg.get("magicq.tap_count", 8)))
+        ok = "lipsesc" not in result and "niciun" not in result
+        self._status(result, ACCENT if ok else RED)
 
     def _status(self, text: str, color: QColor = MUTED) -> None:
         self.lbl_status.setText(text)
